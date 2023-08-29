@@ -14,8 +14,13 @@
     "build": "rm -rf ./lib && tsc",
     "prepack": "yarn build"
   },
+  "dependencies": {
+    "glob": "^10.3.3",
+    "yargs": "^17.7.2"
+  },
   "devDependencies": {
     "@types/node": "^20.5.7",
+    "@types/yargs": "^17.0.24",
     "prettier": "^3.0.2",
     "typescript": "^5.2.2"
   }
