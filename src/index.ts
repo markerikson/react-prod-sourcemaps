@@ -48,7 +48,8 @@ export function loadSourcemap(filePath: string) {
 
 function loadExistingReactDOMSourcemap(version: string) {
   const filename = "react-dom.production.min.js.map";
-  const filePath = path.join(__dirname, "assets", "react-dom", version, filename);
+  const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
+  console.log("Loading original ReactDOM sourcemap from: ", filePath);
 
   const reactDomSourcemap: SourceMapV3 = loadSourcemap(filePath);
   return reactDomSourcemap;
@@ -58,7 +59,7 @@ function findMatchingReactDOMVersion(
   reactDomFilename: string,
   inputSourcemap: SourceMapV3
 ): ReactVersion {
-  const filenameIndex = inputSourcemap.names.indexOf(reactDomFilename);
+  const filenameIndex = inputSourcemap.sources.indexOf(reactDomFilename);
   if (filenameIndex === -1) {
     throw new Error(`Cannot find '${reactDomFilename}' in input sourcemap`);
   }

@@ -41,12 +41,14 @@ function main() {
   }
 
   for (const inputFilePath of inputFilePaths) {
-    console.log("Processing file: ", inputFilePath);
     const fullPath = path.resolve(inputFilePath);
-    console.log("Full path: ", fullPath);
+    console.log("Processing file: ", fullPath);
     const inputSourcemap = loadSourcemap(inputFilePath);
-    console.log("Sourcemap: ", inputSourcemap.file, inputSourcemap.names);
-    // const outputSourcemap = rewriteSourcemapWithReactProd(inputSourcemap);
+
+    const rewriteResult = rewriteSourcemapWithReactProd(inputSourcemap);
+    const outputFilePath = inputFilePath.replace(".js.map", ".remapped.js.map");
+    console.log("Writing output to: ", outputFilePath);
+    fs.writeFileSync(outputFilePath, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
   }
 }
 
