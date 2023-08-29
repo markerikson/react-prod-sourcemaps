@@ -8,6 +8,7 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
+    "@types/node": "^20.5.7",
     "prettier": "^3.0.2",
     "typescript": "^5.2.2"
   }
