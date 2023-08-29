@@ -9,7 +9,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "lib/main.js",
+  "main": "lib/index.js",
   "bin": {
     "react-prod-sourcemaps": "lib/main.js"
   },
