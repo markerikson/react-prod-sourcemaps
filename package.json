@@ -15,7 +15,9 @@
     "prepack": "yarn build"
   },
   "dependencies": {
+    "@ampproject/remapping": "^2.2.1",
     "glob": "^10.3.3",
+    "magic-string": "^0.30.3",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
