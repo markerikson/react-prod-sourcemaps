@@ -6,6 +6,9 @@
   "author": "Mark Erikson",
   "license": "MIT",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "lib/main.js",
   "bin": {
     "react-prod-sourcemaps": "lib/main.js"
