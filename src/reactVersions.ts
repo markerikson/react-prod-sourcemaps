@@ -6,6 +6,11 @@ export interface ReactVersion {
 
 export const knownReactProdVersions: ReactVersion[] = [
   {
+    version: "17.0.2",
+    package: "react-dom",
+    contentHash: "aa5e027a236b156f5e833ae8a86e94474130b78f0b70386c1b213417d0013910",
+  },
+  {
     version: "18.2.0",
     package: "react-dom",
     contentHash: "1404cd9fd1e2ee3ce79fba01957b01c83f88ccd86a3e55e6a51a871d9fe05552",
