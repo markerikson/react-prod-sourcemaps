@@ -2,11 +2,18 @@
   "name": "@acemarke/react-prod-sourcemaps",
   "version": "0.0.0",
   "description": "A tool to update app sourcemaps with the original code of ReactDOM's production builds",
-  "main": "index.js",
   "repository": "https://github.com/markerikson/react-prod-sourcemaps",
   "author": "Mark Erikson",
   "license": "MIT",
   "private": false,
+  "main": "lib/main.js",
+  "bin": {
+    "react-prod-sourcemaps": "lib/main.js"
+  },
+  "scripts": {
+    "build": "rm -rf ./lib && tsc",
+    "prepack": "yarn build"
+  },
   "devDependencies": {
     "@types/node": "^20.5.7",
     "prettier": "^3.0.2",
