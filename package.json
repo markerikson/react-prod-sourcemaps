@@ -1,6 +1,6 @@
 {
   "name": "@acemarke/react-prod-sourcemaps",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A tool to update app sourcemaps with the original code of ReactDOM's production builds",
   "repository": "https://github.com/markerikson/react-prod-sourcemaps",
   "author": "Mark Erikson",
