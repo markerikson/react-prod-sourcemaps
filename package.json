@@ -27,5 +27,10 @@
     "prettier": "^3.0.2",
     "tsx": "^3.12.7",
     "typescript": "^5.2.2"
-  }
+  },
+  "files": [
+    "assets",
+    "lib",
+    "src"
+  ]
 }
