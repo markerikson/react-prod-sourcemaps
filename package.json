@@ -5,14 +5,11 @@
   "repository": "https://github.com/markerikson/react-prod-sourcemaps",
   "author": "Mark Erikson",
   "license": "MIT",
-  "private": false,
   "publishConfig": {
     "access": "public"
   },
   "main": "lib/index.js",
-  "bin": {
-    "react-prod-sourcemaps": "lib/main.js"
-  },
+  "bin": "lib/main.js",
   "scripts": {
     "build": "rm -rf ./lib && tsc",
     "prepack": "yarn build",
