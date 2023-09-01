@@ -19,6 +19,12 @@ const argv = yargs
       "Input sourcemap file path. If no output path is provided, the rewritten sourcemap will be written to the same directory with the same name, but with a `.remapped` suffix.",
     type: "string",
   })
+  .option("outputFile", {
+    alias: "o",
+    description:
+      "Output sourcemap file path. If no output path is provided, the rewritten sourcemap will be written to the same directory with the same name, but with a `.remapped` suffix.",
+    type: "string",
+  })
   .help()
   .alias("help", "h")
   .parseSync();
@@ -46,7 +52,7 @@ function main() {
     const inputSourcemap = loadSourcemap(inputFilePath);
 
     const rewriteResult = rewriteSourcemapWithReactProd(inputSourcemap);
-    const outputFilePath = inputFilePath.replace(".js.map", ".remapped.js.map");
+    const outputFilePath = argv.outputFile ?? inputFilePath.replace(".js.map", ".remapped.js.map");
     console.log("Writing output to: ", outputFilePath);
     fs.writeFileSync(outputFilePath, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
   }
