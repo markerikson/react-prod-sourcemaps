@@ -1,11 +1,12 @@
 import remapping from "@ampproject/remapping";
 import fs from "fs";
 import path from "path";
+import { log } from "console";
 import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
 
+import * as BuildPlugins from "./unplugin";
 import { ReactVersion, hashesToVersions } from "./reactVersions";
-
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions";
 
 // Copied from:
@@ -46,13 +47,11 @@ export function loadSourcemap(filePath: string) {
   return maybeSourcemap;
 }
 
-function loadExistingReactDOMSourcemap(version: string) {
+function loadExistingReactDOMSourcemap(version: string): SourceMapV3 {
   const filename = "react-dom.production.min.js.map";
   const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
   console.log("Loading original ReactDOM sourcemap from: ", filePath);
-
-  const reactDomSourcemap: SourceMapV3 = loadSourcemap(filePath);
-  return reactDomSourcemap;
+  return loadSourcemap(filePath);
 }
 
 function findMatchingReactDOMVersion(
@@ -85,32 +84,63 @@ interface RewriteSourcemapResult {
   reactVersion: ReactVersion | null;
 }
 
-export function rewriteSourcemapWithReactProd(inputSourcemap: SourceMapV3): RewriteSourcemapResult {
+// Rougly, the operation performed here is:
+// - Find the react-dom.production.min.js file in our sourcemap
+// - Find the version of React that matches the contents of that file
+// - Load the original sourcemap for that version of React
+// - Swap them out by rewriting the sourcemap
+export function maybeRewriteSourcemapWithReactProd(
+  inputSourcemap: SourceMapV3,
+  options: { verbose?: boolean }
+): RewriteSourcemapResult {
   const isValidSourcemap = isSourceMapV3(inputSourcemap);
   if (!isValidSourcemap) {
     throw new Error("Invalid sourcemap");
   }
 
-  let reactVersion: ReactVersion | null = null;
+  const reactVersions: ReactVersion[] = [];
 
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
-    if (file.includes("react-dom.production")) {
-      console.log("ReactDOM file:", file, ctx);
-
-      if (file.endsWith("react-dom.production.min.js")) {
-        const versionEntry = findMatchingReactDOMVersion(file, inputSourcemap);
-        reactVersion = versionEntry;
-        const reactDomSourcemap = loadExistingReactDOMSourcemap(versionEntry.version);
-        console.log("Found matching React version:", versionEntry.version);
-        return reactDomSourcemap as SourceMapInput;
+    if (!file.includes("react-dom.production")) {
+      if (options.verbose) {
+        log(`Skipping sourcemap ${file} because it does not contain react-dom.production`);
       }
+      return null;
     }
-    return null;
+
+    if (options.verbose) log("Found react-dom.production in file:", file, ctx);
+    if (!file.endsWith("react-dom.production.min.js") && options.verbose) {
+      log("Skipping non-production react-dom file:", file);
+      return;
+    }
+
+    const versionEntry: ReactVersion | null = findMatchingReactDOMVersion(file, inputSourcemap);
+    if (!versionEntry) {
+      return null;
+    }
+
+    reactVersions.push(versionEntry);
+    if (options.verbose) log("Found matching React version:", versionEntry.version);
+    return loadExistingReactDOMSourcemap(versionEntry.version) as SourceMapInput;
   });
+
+  if (reactVersions.length > 1 && options.verbose) {
+    log(
+      "Found multiple React versions:",
+      reactVersions.map(v => v.version)
+    );
+  }
 
   return {
     outputSourcemap: remapped,
-    rewroteSourcemap: !!reactVersion,
-    reactVersion,
+    rewroteSourcemap: reactVersions.length > 0,
+    reactVersion: reactVersions[0] ?? null,
   };
 }
+
+export type { ReactSourcemapsPluginOptions } from "./unplugin";
+export const ViteReactSourcemapsPlugin = BuildPlugins.ViteReactSourcemapsPlugin;
+export const RollupReactSoucemapsPlugin = BuildPlugins.RollupReactSoucemapsPlugin;
+export const WebpackReactSoucemapsPlugin = BuildPlugins.WebpackReactSoucemapsPlugin;
+export const RspackReactSourcemapsPlugin = BuildPlugins.RspackReactSourcemapsPlugin;
+export const EsbuildReactSourcemapsPlugin = BuildPlugins.EsbuildReactSourcemapsPlugin;
