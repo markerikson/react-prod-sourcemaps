@@ -4,10 +4,21 @@ import path from "path";
 import { log } from "console";
 import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
+import resolveUri from "@jridgewell/resolve-uri";
 
 import * as BuildPlugins from "./unplugin";
 import { ReactVersion, hashesToVersions } from "./reactVersions";
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions";
+
+// Borrowed from `trace-mapping` internals
+function resolve(input: string, base: string | undefined): string {
+  // The base is always treated as a directory, if it's not empty.
+  // https://github.com/mozilla/source-map/blob/8cb3ee57/lib/util.js#L327
+  // https://github.com/chromium/chromium/blob/da4adbb3/third_party/blink/renderer/devtools/front_end/sdk/SourceMap.js#L400-L401
+  if (base && !base.endsWith("/")) base += "/";
+
+  return resolveUri(input, base);
+}
 
 // Copied from:
 // https://github.com/jridgewell/trace-mapping/blob/5ccfcfeeee9dfa3b13567bb0f95260ea32f2c269/src/types.ts#L4
@@ -58,7 +69,17 @@ function findMatchingReactDOMVersion(
   reactDomFilename: string,
   inputSourcemap: SourceMapV3
 ): ReactVersion {
-  const filenameIndex = inputSourcemap.sources.indexOf(reactDomFilename);
+  let filenameIndex = inputSourcemap.sources.indexOf(reactDomFilename);
+  if (filenameIndex === -1) {
+    // Try one more time. Maybe the path had extra segments in it, like:
+    // "webpack://_N_E/./node_modules/react-dom/cjs/react-dom.production.min.js"
+    filenameIndex = inputSourcemap.sources.findIndex(filename => {
+      if (!filename) return false;
+      // Use the same resolve logic as `remapping` to normalize the path
+      const normalizedPath = resolve(filename, "");
+      return normalizedPath === reactDomFilename;
+    });
+  }
   if (filenameIndex === -1) {
     throw new Error(`Cannot find '${reactDomFilename}' in input sourcemap`);
   }
