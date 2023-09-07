@@ -20,16 +20,23 @@
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
+    "@jridgewell/resolve-uri": "^3.1.1",
     "glob": "^10.3.3",
     "magic-string": "^0.30.3",
+    "unplugin": "^1.4.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@rspack/core": "^0.3.1",
     "@types/node": "^20.5.7",
     "@types/yargs": "^17.0.24",
+    "esbuild": "^0.19.2",
     "prettier": "^3.0.2",
+    "rollup": "^3.28.1",
     "tsx": "^3.12.7",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
+    "webpack": "^5.88.2"
   },
   "files": [
     "assets",

@@ -3,9 +3,10 @@
 import yargs from "yargs";
 import fs from "fs";
 import path from "path";
+import { log } from "console";
 
 import { knownReactProdVersions } from "./reactVersions";
-import { loadSourcemap, rewriteSourcemapWithReactProd } from "./index";
+import { loadSourcemap, maybeRewriteSourcemapWithReactProd } from "./index";
 
 const argv = yargs
   .option("reactVersions", {
@@ -19,13 +20,18 @@ const argv = yargs
       "Input sourcemap file path. If no output path is provided, the rewritten sourcemap will be written to the same directory with the same name, but with a `.remapped` suffix.",
     type: "string",
   })
+  .option("verbose", {
+    alias: "v",
+    description: "Run with verbose logging",
+    type: "boolean",
+  })
   .help()
   .alias("help", "h")
   .parseSync();
 
 function main() {
   if (argv.reactVersions) {
-    console.log("Available React versions:", knownReactProdVersions);
+    log("Available React versions:", knownReactProdVersions);
     return;
   }
 
@@ -36,18 +42,30 @@ function main() {
   }
 
   if (inputFilePaths.length === 0) {
-    console.error("No input file provided");
-    return;
+    throw new TypeError("No input file provided, got: " + argv.inputFile);
   }
 
   for (const inputFilePath of inputFilePaths) {
     const fullPath = path.resolve(inputFilePath);
-    console.log("Processing file: ", fullPath);
+    if (argv.verbose) {
+      log("Processing file: ", fullPath);
+    }
     const inputSourcemap = loadSourcemap(inputFilePath);
+    const rewriteResult = maybeRewriteSourcemapWithReactProd(inputSourcemap, {
+      verbose: argv.verbose,
+    });
 
-    const rewriteResult = rewriteSourcemapWithReactProd(inputSourcemap);
+    if (!rewriteResult.rewroteSourcemap) {
+      if (argv.verbose) {
+        log("No React version found in sourcemap, skipping");
+      }
+      continue;
+    }
+
     const outputFilePath = inputFilePath.replace(".js.map", ".remapped.js.map");
-    console.log("Writing output to: ", outputFilePath);
+    if (argv.verbose) {
+      log("Writing output to: ", outputFilePath);
+    }
     fs.writeFileSync(outputFilePath, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
   }
 }
