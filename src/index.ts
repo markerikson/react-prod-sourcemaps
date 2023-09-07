@@ -58,10 +58,16 @@ export function loadSourcemap(filePath: string) {
   return maybeSourcemap;
 }
 
-function loadExistingReactDOMSourcemap(version: string): SourceMapV3 {
+function loadExistingReactDOMSourcemap(
+  version: string,
+  options: { verbose?: boolean }
+): SourceMapV3 {
   const filename = "react-dom.production.min.js.map";
   const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
-  console.log("Loading original ReactDOM sourcemap from: ", filePath);
+
+  if (options.verbose) {
+    log("Loading original ReactDOM sourcemap from: ", filePath);
+  }
   return loadSourcemap(filePath);
 }
 
@@ -142,7 +148,7 @@ export function maybeRewriteSourcemapWithReactProd(
 
     reactVersions.push(versionEntry);
     if (options.verbose) log("Found matching React version:", versionEntry.version);
-    return loadExistingReactDOMSourcemap(versionEntry.version) as SourceMapInput;
+    return loadExistingReactDOMSourcemap(versionEntry.version, options) as SourceMapInput;
   });
 
   if (reactVersions.length > 1 && options.verbose) {
