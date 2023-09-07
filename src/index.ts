@@ -128,8 +128,8 @@ export function maybeRewriteSourcemapWithReactProd(
   const reactVersions: ReactVersion[] = [];
 
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
-    if (!file.includes("react-dom.production")) {
-      if (options.verbose) {
+    if (!file.includes("react-dom.production.min")) {
+      if (options?.verbose) {
         log(`Skipping sourcemap ${file} because it does not contain react-dom.production`);
       }
       return null;
