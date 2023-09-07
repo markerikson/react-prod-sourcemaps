@@ -20,6 +20,11 @@ export const knownReactProdVersions: ReactVersion[] = [
     package: "react-dom",
     contentHash: "db70122e66c434e360539319ef318959f303a8792417e3cbb14abb6e56294191",
   },
+  {
+    version: "0.0.0-experimental-953cb02f6-20230907",
+    package: "react-dom",
+    contentHash: "4cd441458e2535562a74651cbcd02d7c2e1f163e364aca608d3c5b00448e1442",
+  },
 ];
 
 export const hashesToVersions: Record<string, ReactVersion> = {};
