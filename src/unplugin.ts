@@ -95,7 +95,7 @@ const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions) =>
 });
 
 export const ViteReactSourcemapsPlugin = unplugin.vite;
-export const RollupReactSoucemapsPlugin = unplugin.rollup;
-export const WebpackReactSoucemapsPlugin = unplugin.webpack;
+export const RollupReactSourcemapsPlugin = unplugin.rollup;
+export const WebpackReactSourcemapsPlugin = unplugin.webpack;
 export const RspackReactSourcemapsPlugin = unplugin.rspack;
 export const EsbuildReactSourcemapsPlugin = unplugin.esbuild;

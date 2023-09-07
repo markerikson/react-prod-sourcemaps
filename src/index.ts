@@ -140,7 +140,7 @@ export function maybeRewriteSourcemapWithReactProd(
 
 export type { ReactSourcemapsPluginOptions } from "./unplugin";
 export const ViteReactSourcemapsPlugin = BuildPlugins.ViteReactSourcemapsPlugin;
-export const RollupReactSoucemapsPlugin = BuildPlugins.RollupReactSoucemapsPlugin;
-export const WebpackReactSoucemapsPlugin = BuildPlugins.WebpackReactSoucemapsPlugin;
+export const RollupReactSourcemapsPlugin = BuildPlugins.RollupReactSourcemapsPlugin;
+export const WebpackReactSourcemapsPlugin = BuildPlugins.WebpackReactSourcemapsPlugin;
 export const RspackReactSourcemapsPlugin = BuildPlugins.RspackReactSourcemapsPlugin;
 export const EsbuildReactSourcemapsPlugin = BuildPlugins.EsbuildReactSourcemapsPlugin;
