@@ -77,12 +77,10 @@ const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions) =>
         build.initialOptions.metafile = true;
         // https://esbuild.github.io/plugins/#on-end
         build.onEnd(result => {
-          // result.metafile contains the metafile data
           if (!result.metafile) {
-            log(
+            throw new Error(
               "ReactSourceMaps: ❌ failed to remap, esbuild result does not include a metafile. This is required for react sourcemaps plugin to work."
             );
-            return;
           }
           rewireSourceMapsFromGeneratedAssetList(
             Object.keys(result.metafile.outputs),

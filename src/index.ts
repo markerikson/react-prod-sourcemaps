@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
 import resolveUri from "@jridgewell/resolve-uri";
 
-import * as BuildPlugins from "./unplugin";
+import * as BuildPlugins from "./build-plugin";
 import { ReactVersion, hashesToVersions } from "./reactVersions";
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions";
 
@@ -165,7 +165,7 @@ export function maybeRewriteSourcemapWithReactProd(
   };
 }
 
-export type { ReactSourcemapsPluginOptions } from "./unplugin";
+export type { ReactSourcemapsPluginOptions } from "./build-plugin";
 export const ViteReactSourcemapsPlugin = BuildPlugins.ViteReactSourcemapsPlugin;
 export const RollupReactSourcemapsPlugin = BuildPlugins.RollupReactSourcemapsPlugin;
 export const WebpackReactSourcemapsPlugin = BuildPlugins.WebpackReactSourcemapsPlugin;
