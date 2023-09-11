@@ -45,7 +45,7 @@ export function isSourceMapV3(map: any): map is SourceMapV3 {
   );
 }
 
-export function loadSourcemap(filePath: string) {
+export function loadSourcemap(filePath: string): SourceMapV3 {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Cannot find ${filePath}`);
   }

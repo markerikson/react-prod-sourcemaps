@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { log } from "console";
+import { log, error } from "console";
 import { createUnplugin } from "unplugin";
 import { maybeRewriteSourcemapWithReactProd, loadSourcemap } from "./index";
 
@@ -75,13 +75,28 @@ const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions) =>
         // Metafile is required in order for us to get a list of
         // generated assets, see https://esbuild.github.io/api/#metafile
         build.initialOptions.metafile = true;
+
+        // in debug, throw an error if sourcemap option is not set
+        if (!build.initialOptions.sourcemap && pluginOptions.debug) {
+          error(
+            "ReactSourceMaps: ❌ sourcemap option is required in order for react-sourcemaps to work with esbuild."
+          );
+        }
         // https://esbuild.github.io/plugins/#on-end
         build.onEnd(result => {
+          // If a build errors, then noop
+          if (result.errors.length) {
+            if (pluginOptions.debug) {
+              log("ReactSourceMaps: ❌ build errored, skipping sourcemap rewrite...");
+            }
+            return;
+          }
           if (!result.metafile) {
             throw new Error(
               "ReactSourceMaps: ❌ failed to remap, esbuild result does not include a metafile. This is required for react sourcemaps plugin to work."
             );
           }
+
           rewireSourceMapsFromGeneratedAssetList(
             Object.keys(result.metafile.outputs),
             pluginOptions

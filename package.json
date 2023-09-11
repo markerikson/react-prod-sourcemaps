@@ -9,6 +9,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "type": "module",
   "main": "lib/index.js",
   "bin": {
     "react-prod-sourcemaps": "lib/main.js"
@@ -16,7 +17,8 @@
   "scripts": {
     "build": "rm -rf ./lib && tsc",
     "prepack": "yarn build",
-    "start": "tsx ./src/main.ts"
+    "start": "tsx ./src/main.ts",
+    "test": "node --loader tsx --test src/*.test.js"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
@@ -33,7 +35,7 @@
     "esbuild": "^0.19.2",
     "prettier": "^3.0.2",
     "rollup": "^3.28.1",
-    "tsx": "^3.12.7",
+    "tsx": "^3.12.8",
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
     "webpack": "^5.88.2"
