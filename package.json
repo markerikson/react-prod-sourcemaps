@@ -29,11 +29,16 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@rollup/plugin-replace": "^5.0.2",
     "@rspack/core": "^0.3.1",
     "@types/node": "^20.5.7",
     "@types/yargs": "^17.0.24",
     "esbuild": "^0.19.2",
     "prettier": "^3.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "rollup": "^3.28.1",
     "tsx": "^3.12.8",
     "typescript": "^5.2.2",

@@ -13,7 +13,7 @@ const PLUGIN_NAME = "react-sourcemaps";
 // and attempts to rewrite them with React production sourcemaps.
 function rewireSourceMapsFromGeneratedAssetList(
   generatedAssets: string[],
-  options?: ReactSourcemapsPluginOptions
+  options: ReactSourcemapsPluginOptions = { debug: false}
 ) {
   if (!generatedAssets.length) {
     log(
@@ -27,23 +27,23 @@ function rewireSourceMapsFromGeneratedAssetList(
     if (!file.endsWith(".map")) continue;
 
     const rewriteResult = maybeRewriteSourcemapWithReactProd(loadSourcemap(file), {
-      verbose: options?.debug,
+      verbose: options.debug,
     });
 
     if (!rewriteResult.rewroteSourcemap) {
-      if (options?.debug) {
+      if (options.debug) {
         log("ReactSourceMaps: ❌ No React version found in sourcemap, skipping", file);
       }
       continue;
     }
-    if (options?.debug)
+    if (options.debug)
       log("ReactSourceMaps: ✅ Remapped react sourcemaps for ", file, "writing to disk...");
     // WriteFileSync overwrites the file by default
     fs.writeFileSync(file, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
   }
 }
 
-const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions) => {
+const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions = {debug: false}) => {
   return {
     name: PLUGIN_NAME,
     webpack(compiler) {
@@ -66,7 +66,7 @@ const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions) =>
       },
     },
     rollup: {
-      writeBundle(bundle) {
+      writeBundle(_outputOptions, bundle) {
         rewireSourceMapsFromGeneratedAssetList(Object.keys(bundle), pluginOptions);
       },
     },
