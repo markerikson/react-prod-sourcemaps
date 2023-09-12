@@ -46,8 +46,25 @@ function rewireSourceMapsFromGeneratedAssetList(
 const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions = {debug: false}) => {
   return {
     name: PLUGIN_NAME,
+    vite: {
+      writeBundle(outputOptions, bundle) {
+        // @TODO: we probably need a better heuristic than to fallback to path.resolve
+        const outputPath = outputOptions.dir ?? path.resolve();
+        const assets = Object.keys(bundle).map(asset => path.join(outputPath, asset));
+        rewireSourceMapsFromGeneratedAssetList(assets, pluginOptions);
+      },
+    },
+    rollup: {
+      writeBundle(outputOptions, bundle) {
+        // @TODO: we probably need a better heuristic than to fallback to path.resolve
+        const outputPath = outputOptions.dir ?? path.resolve();
+        const assets = Object.keys(bundle).map(asset => path.join(outputPath, asset));
+        rewireSourceMapsFromGeneratedAssetList(assets, pluginOptions);
+      },
+    },
     webpack(compiler) {
       compiler.hooks.afterEmit.tap(PLUGIN_NAME, compilation => {
+        // @TODO: we probably need a better heuristic than to fallback to path.resolve
         const outputPath = compilation.outputOptions.path ?? path.resolve();
         const assets = Object.keys(compilation.assets).map(asset => path.join(outputPath, asset));
         rewireSourceMapsFromGeneratedAssetList(assets, pluginOptions);
@@ -55,20 +72,11 @@ const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions = {
     },
     rspack(compiler) {
       compiler.hooks.afterEmit.tap(PLUGIN_NAME, compilation => {
+        // @TODO: we probably need a better heuristic than to fallback to path.resolve
         const outputPath = compilation.outputOptions.path ?? path.resolve();
         const assets = Object.keys(compilation.assets).map(asset => path.join(outputPath, asset));
         rewireSourceMapsFromGeneratedAssetList(assets, pluginOptions);
       });
-    },
-    vite: {
-      writeBundle(_outputOptions, bundle) {
-        rewireSourceMapsFromGeneratedAssetList(Object.keys(bundle), pluginOptions);
-      },
-    },
-    rollup: {
-      writeBundle(_outputOptions, bundle) {
-        rewireSourceMapsFromGeneratedAssetList(Object.keys(bundle), pluginOptions);
-      },
     },
     esbuild: {
       setup(build) {

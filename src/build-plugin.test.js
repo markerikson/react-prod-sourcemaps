@@ -3,11 +3,14 @@ import test from "node:test";
 import path from "node:path";
 import assert from "node:assert";
 import * as url from "node:url";
+import child_process from "node:child_process"
 
 import remapping from "@ampproject/remapping";
 import esbuild from "esbuild";
 import webpack from "webpack";
-import { rollup } from "rollup";
+import {rollup} from "rollup";
+import * as vite from "vite"
+
 // If this is not used, rollup does not resolve the react and react-dom imports
 // and marks them as external which means they dont end up in our bundle 
 // and we cant rewrite their source maps.
@@ -49,21 +52,52 @@ const ctx = React.createContext();
 ReactDOM.render(App, document.getElementById("root"));
 `;
 
+const HTMLTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>React App</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="./index.js" type="module"></script>
+</body>
+`
+
+const RSPackConfigTemplate = (JS_ENTRY_POINT, BUILD_OUTPUT_PATH) => `
+import * as pkg from "./../index";
+module.exports = {
+  entry: {
+    main: "${JS_ENTRY_POINT}",
+  },
+  devtool: "source-map",
+  output: {
+    filename: 'index.js',
+    path: "${BUILD_OUTPUT_PATH}"
+  },
+  plugins: [pkg.RspackReactSourcemapsPlugin()],
+}`
+
 const SOURCE_DIR = path.resolve("./tmp/");
 const BUILD_OUTPUT_PATH = path.resolve("./tmp/dist/");
-const ENTRY_POINT = path.resolve("./tmp/index.js");
+const JS_ENTRY_POINT = path.resolve("./tmp/index.js");
+const HTML_ENTRY_POINT = path.resolve("./tmp/index.html");
 const EXPECTED_SOURCEMAP_PATH = path.resolve("./tmp/dist/index.js.map");
+const RSPACK_CONFIG_PATH = path.resolve("./tmp/rspack.config.js");
 
 // Initialize project boilerplate in the tmp directory.
 // Source lives in ./tmp/and the build output is generated
 // to ./tmp/dist/
 function initProjectBoilerplate() {
   if (fs.existsSync(SOURCE_DIR)) {
-    // throw new Error("tmp directory already exists");
+    throw new Error("tmp directory already exists");
   }
 
   fs.mkdirSync(SOURCE_DIR, { recursive: true });
-  fs.writeFileSync(ENTRY_POINT, ReactTemplate);
+  fs.writeFileSync(JS_ENTRY_POINT, ReactTemplate);
+  fs.writeFileSync(HTML_ENTRY_POINT, HTMLTemplate);
+  fs.writeFileSync(RSPACK_CONFIG_PATH, RSPackConfigTemplate(JS_ENTRY_POINT, BUILD_OUTPUT_PATH));
 }
 
 function teardown() {
@@ -81,12 +115,12 @@ function assertCleanEnv(){
 // If tests get slow, this is a likely optimization opportunity.
 test.before(() => teardown());
 test.beforeEach(() => initProjectBoilerplate());
-// test.afterEach(() => teardown());
-// test.after(() => teardown());
+test.afterEach(() => teardown());
+test.after(() => teardown());
 
-// process.on("exit", () => {
-//   teardown();
-// });
+process.on("exit", () => {
+  teardown();
+});
 
 
 function hasMinifiedSourcemaps(map) {
@@ -110,10 +144,10 @@ function hasMinifiedSourcemaps(map) {
 global.__filename = url.fileURLToPath(import.meta.url);
 global.__dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
-test.skip("esbuild", async () => {
+test("esbuild", async () => {
   assertCleanEnv()
   await esbuild.build({
-    entryPoints: [ENTRY_POINT],
+    entryPoints: [JS_ENTRY_POINT],
     outdir: BUILD_OUTPUT_PATH,
     sourcemap: true,
     bundle: true,
@@ -127,10 +161,10 @@ test.skip("esbuild", async () => {
   assert.equal(rewritten, true, "react-dom source maps were not rewritten");
 });
 
-test.skip("webpack", async () => {
+test("webpack", async () => {
   assertCleanEnv()
   webpack({
-    entry: ENTRY_POINT,
+    entry: JS_ENTRY_POINT,
     output: {
       path: BUILD_OUTPUT_PATH,
       filename: "index.js",
@@ -152,10 +186,7 @@ test.skip("webpack", async () => {
 test("rollup", async () => {
   // assertCleanEnv()
   await rollup({
-    input: ENTRY_POINT,
-    bundle: {
-      write: true,
-    },
+    input: JS_ENTRY_POINT,
     output: {
       dir: BUILD_OUTPUT_PATH,
       sourcemap: true,
@@ -163,6 +194,7 @@ test("rollup", async () => {
     plugins: [
       rollupPluginCommonJS(),
       rollupDefinePlugin({
+        preventAssignment: true, // silence console warning
         "process.env.NODE_ENV": JSON.stringify("production")
       }),
       rollupNodeResolvePlugin(), 
@@ -182,5 +214,39 @@ test("rollup", async () => {
   assert.equal(original, false, "minified react-dom source maps were found");
   assert.equal(rewritten, true, "react-dom source maps were not rewritten");
 });
-test.skip("vite", () => {});
-test.skip("rspack", () => {});
+test("vite", async () => {
+  assertCleanEnv()
+  await vite.build({
+    root: SOURCE_DIR,
+    build: {
+      write: true,
+      outdir: BUILD_OUTPUT_PATH,
+      sourcemap: true,
+      rollupOptions: {
+        output: {
+          entryFileNames: `[name].js`,
+          chunkFileNames: `[name].js`,
+          assetFileNames: `[name].[ext]`
+        }
+      }
+    },
+    plugins: [pkg.ViteReactSourcemapsPlugin()],
+  });
+  await pollForSourceMap();
+  const {original, rewritten} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  assert.equal(original, false, "minified react-dom source maps were found");
+  assert.equal(rewritten, true, "react-dom source maps were not rewritten");
+});
+
+// This fails with the following stacktrace. Since rspack support from unplugin is experimental, skip the test for now.
+// Error [ERR_REQUIRE_ESM]: require() of ES Module /react-prod-sourcemaps/node_modules/string-width/index.js from /react-prod-sourcemaps/node_modules/cliui/build/index.cjs not supported.
+// Instead change the require of index.js in /react-prod-sourcemaps/node_modules/cliui/build/index.cjs to a dynamic import() which is available in all CommonJS modules.
+// ...
+test.skip("rspack", async() => {
+  assertCleanEnv()
+  child_process.execSync(`npx rspack build -c ${RSPACK_CONFIG_PATH}`);
+  await pollForSourceMap();
+  const {original, rewritten} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  assert.equal(original, false, "minified react-dom source maps were found");
+  assert.equal(rewritten, true, "react-dom source maps were not rewritten");
+});
