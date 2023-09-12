@@ -1,4 +1,5 @@
 lib/
+tmp/
 
 # Logs
 logs

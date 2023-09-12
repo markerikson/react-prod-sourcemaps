@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
 import resolveUri from "@jridgewell/resolve-uri";
 
-import * as BuildPlugins from "./unplugin";
+import * as BuildPlugins from "./build-plugin";
 import { ReactVersion, hashesToVersions } from "./reactVersions";
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions";
 
@@ -45,7 +45,7 @@ export function isSourceMapV3(map: any): map is SourceMapV3 {
   );
 }
 
-export function loadSourcemap(filePath: string) {
+export function loadSourcemap(filePath: string): SourceMapV3 {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Cannot find ${filePath}`);
   }
@@ -60,12 +60,12 @@ export function loadSourcemap(filePath: string) {
 
 function loadExistingReactDOMSourcemap(
   version: string,
-  options?: { verbose?: boolean }
+  options: { verbose?: boolean } = {verbose: false}
 ): SourceMapV3 {
   const filename = "react-dom.production.min.js.map";
   const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
 
-  if (options?.verbose) {
+  if (options.verbose) {
     log("Loading original ReactDOM sourcemap from: ", filePath);
   }
   return loadSourcemap(filePath);
@@ -118,7 +118,7 @@ interface RewriteSourcemapResult {
 // - Swap them out by rewriting the sourcemap
 export function maybeRewriteSourcemapWithReactProd(
   inputSourcemap: SourceMapV3,
-  options?: { verbose?: boolean }
+  options: { verbose?: boolean } = {verbose: false}
 ): RewriteSourcemapResult {
   const isValidSourcemap = isSourceMapV3(inputSourcemap);
   if (!isValidSourcemap) {
@@ -129,14 +129,14 @@ export function maybeRewriteSourcemapWithReactProd(
 
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
     if (!file.includes("react-dom.production.min")) {
-      if (options?.verbose) {
-        log(`Skipping sourcemap ${file} because it does not contain react-dom.production`);
+      if (options.verbose) {
+        log(`Skipping sourcemap ${file} because it does not contain react-dom.production.min`);
       }
       return null;
     }
 
-    if (options?.verbose) log("Found react-dom.production in file:", file, ctx);
-    if (!file.endsWith("react-dom.production.min.js") && options?.verbose) {
+    if (options.verbose) log("Found react-dom.production in file:", file, ctx);
+    if (!file.endsWith("react-dom.production.min.js") && options.verbose) {
       log("Skipping non-production react-dom file:", file);
       return;
     }
@@ -147,11 +147,11 @@ export function maybeRewriteSourcemapWithReactProd(
     }
 
     reactVersions.push(versionEntry);
-    if (options?.verbose) log("Found matching React version:", versionEntry.version);
+    if (options.verbose) log("Found matching React version:", versionEntry.version);
     return loadExistingReactDOMSourcemap(versionEntry.version, options) as SourceMapInput;
   });
 
-  if (reactVersions.length > 1 && options?.verbose) {
+  if (reactVersions.length > 1 && options.verbose) {
     log(
       "Found multiple React versions:",
       reactVersions.map(v => v.version)
@@ -165,7 +165,7 @@ export function maybeRewriteSourcemapWithReactProd(
   };
 }
 
-export type { ReactSourcemapsPluginOptions } from "./unplugin";
+export type { ReactSourcemapsPluginOptions } from "./build-plugin";
 export const ViteReactSourcemapsPlugin = BuildPlugins.ViteReactSourcemapsPlugin;
 export const RollupReactSourcemapsPlugin = BuildPlugins.RollupReactSourcemapsPlugin;
 export const WebpackReactSourcemapsPlugin = BuildPlugins.WebpackReactSourcemapsPlugin;
