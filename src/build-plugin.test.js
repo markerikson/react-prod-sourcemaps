@@ -140,7 +140,9 @@ function hasMinifiedSourcemaps(map) {
   return {original, rewritten};
 }
 
-// It seems like some of the build tools rely on this
+// Builds fail without these globals. Very likely due to the fact that
+// we're using CJS modules in an ESM environment. This will be up to the
+// user to fix in their own env, we just want to make sure we can build in our test env.
 global.__filename = url.fileURLToPath(import.meta.url);
 global.__dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
