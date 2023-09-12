@@ -18,7 +18,8 @@
     "build": "rm -rf ./lib && tsc",
     "prepack": "yarn build",
     "start": "tsx ./src/main.ts",
-    "test": "node --loader tsx --test src/*.test.js"
+    "test": "node --loader tsx --test src/*.test.js",
+    "test:watch": "node --watch --loader tsx --test src/*.test.js"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",

@@ -6,6 +6,7 @@ import { maybeRewriteSourcemapWithReactProd, loadSourcemap } from "./index";
 
 export interface ReactSourcemapsPluginOptions {
   debug?: boolean;
+  preserve?: boolean;
 }
 
 const PLUGIN_NAME = "react-sourcemaps";
@@ -13,7 +14,7 @@ const PLUGIN_NAME = "react-sourcemaps";
 // and attempts to rewrite them with React production sourcemaps.
 function rewireSourceMapsFromGeneratedAssetList(
   generatedAssets: string[],
-  options: ReactSourcemapsPluginOptions = { debug: false}
+  options: ReactSourcemapsPluginOptions
 ) {
   if (!generatedAssets.length) {
     log(
@@ -36,14 +37,25 @@ function rewireSourceMapsFromGeneratedAssetList(
       }
       continue;
     }
-    if (options.debug)
+    if (options.debug){
       log("ReactSourceMaps: ✅ Remapped react sourcemaps for ", file, "writing to disk...");
-    // WriteFileSync overwrites the file by default
-    fs.writeFileSync(file, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
+    }
+
+    if(!options.preserve){
+      // WriteFileSync overwrites the file by default
+      fs.writeFileSync(file, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
+      continue;
+    }
+
+    const remappedFile = file.replace(/\.map$/, ".remapped.map");
+    fs.writeFileSync(remappedFile, JSON.stringify(rewriteResult.outputSourcemap, null, 2));
+    if(options.debug){
+      log("ReactSourceMaps: Remapped sourcemap written to ", remappedFile);
+    }
   }
 }
 
-const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions = {debug: false}) => {
+const unplugin = createUnplugin((pluginOptions: ReactSourcemapsPluginOptions = {debug: false, preserve: false}) => {
   return {
     name: PLUGIN_NAME,
     vite: {
