@@ -146,6 +146,13 @@ function hasMinifiedSourcemaps(map) {
 global.__filename = url.fileURLToPath(import.meta.url);
 global.__dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
+// The test suite is currently not very exhaustive and only tests the most basic
+// case where the build succeeds and the sourcemap is properly configured. We _do_not_ 
+// test invalid configs (e.g. not generating sourcemaps etc) and our plugin does not warn
+// the user if they are not generating sourcemaps. This is up to the user to configure, 
+// but could be subject to change in case it ends up being confusing. The alternative would
+// be to throw an error if sourcemaps are not generated, but this might cause inconvenience
+// for users who dont want sourcemaps and would have to disable the plugin.
 test("esbuild", async () => {
   assertCleanEnv()
   await esbuild.build({
