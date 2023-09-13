@@ -63,7 +63,7 @@ The plugin supports the following options:
 Webpack:
 
 ```javascript
-import { WebpackReactSourcemapsPlugin } from "react-prod-sourcemaps";
+import { WebpackReactSourcemapsPlugin } from "@acemarke/react-prod-sourcemaps";
 
 module.exports = {
   // ...webpack config
@@ -75,7 +75,7 @@ module.exports = {
 esbuild:
 
 ```javascript
-import { EsbuildReactSourcemapsPlugin } from "react-prod-sourcemaps";
+import { EsbuildReactSourcemapsPlugin } from "@acemarke/react-prod-sourcemaps";
 
 esbuild.build({
   // ...esbuild config
@@ -87,7 +87,7 @@ esbuild.build({
 Rollup:
 
 ```javascript
-import { RollupReactSourcemapsPlugin } from "react-prod-sourcemaps";
+import { RollupReactSourcemapsPlugin } from "@acemarke/react-prod-sourcemaps";
 
 rollup({
   // ...rollup config
@@ -101,7 +101,7 @@ rollup({
 Vite:
 
 ```javascript
-import { ViteReactSourcemapsPlugin } from "react-prod-sourcemaps";
+import { ViteReactSourcemapsPlugin } from "@acemarke/react-prod-sourcemaps";
 
 vite.build({
   // ...vite config
