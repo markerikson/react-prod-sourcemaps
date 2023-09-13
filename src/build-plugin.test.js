@@ -3,20 +3,20 @@ import test from "node:test";
 import path from "node:path";
 import assert from "node:assert";
 import * as url from "node:url";
-import child_process from "node:child_process"
+import child_process from "node:child_process";
 
 import remapping from "@ampproject/remapping";
 import esbuild from "esbuild";
 import webpack from "webpack";
-import {rollup} from "rollup";
-import * as vite from "vite"
+import { rollup } from "rollup";
+import * as vite from "vite";
 
 // If this is not used, rollup does not resolve the react and react-dom imports
-// and marks them as external which means they dont end up in our bundle 
+// and marks them as external which means they dont end up in our bundle
 // and we cant rewrite their source maps.
-import { nodeResolve as rollupNodeResolvePlugin } from '@rollup/plugin-node-resolve';
-import rollupDefinePlugin from '@rollup/plugin-replace';
-import rollupPluginCommonJS from "@rollup/plugin-commonjs"
+import { nodeResolve as rollupNodeResolvePlugin } from "@rollup/plugin-node-resolve";
+import rollupDefinePlugin from "@rollup/plugin-replace";
+import rollupPluginCommonJS from "@rollup/plugin-commonjs";
 
 import * as pkg from "./index";
 
@@ -29,7 +29,7 @@ function pollForSourceMap() {
         clearInterval(interval);
         resolve();
       }
-      if(Date.now() - start > 10_000) {
+      if (Date.now() - start > 10_000) {
         clearInterval(interval);
         reject(new Error("timed out waiting for source map, build failed"));
       }
@@ -63,7 +63,7 @@ const HTMLTemplate = `
   <div id="root"></div>
   <script src="./index.js" type="module"></script>
 </body>
-`
+`;
 
 const RSPackConfigTemplate = (JS_ENTRY_POINT, BUILD_OUTPUT_PATH) => `
 import * as pkg from "./../index";
@@ -77,7 +77,7 @@ module.exports = {
     path: "${BUILD_OUTPUT_PATH}"
   },
   plugins: [pkg.RspackReactSourcemapsPlugin()],
-}`
+}`;
 
 const SOURCE_DIR = path.resolve("./tmp/");
 const BUILD_OUTPUT_PATH = path.resolve("./tmp/dist/");
@@ -106,9 +106,9 @@ function teardown() {
   fs.rmSync(SOURCE_DIR, { recursive: true });
 }
 
-function assertCleanEnv(){  
-  assert.equal(fs.existsSync(BUILD_OUTPUT_PATH), false, "build output directory already exists")
-  assert.equal(fs.existsSync(EXPECTED_SOURCEMAP_PATH), false, "expected sourcemap already exists")
+function assertCleanEnv() {
+  assert.equal(fs.existsSync(BUILD_OUTPUT_PATH), false, "build output directory already exists");
+  assert.equal(fs.existsSync(EXPECTED_SOURCEMAP_PATH), false, "expected sourcemap already exists");
 }
 
 // We'll run the tests in sequence as they all use the same
@@ -123,73 +123,79 @@ process.on("exit", () => {
   teardown();
 });
 
-
 function hasMinifiedSourcemaps(map) {
   let hasOriginalReactSourceMaps = false;
   let hasRewrittenReactSourceMaps = false;
 
   remapping(map, (file, ctx) => {
     // check if source map contains minified react-dom
-    if(file.includes("react-dom.production.min.js")) {
+    if (file.includes("react-dom.production.min.js")) {
       hasOriginalReactSourceMaps = true;
     }
     // check if source map contains our rewritten react-dom sourcemap
-    if(file.includes("react-dom.production.js")) {
+    if (file.includes("react-dom.production.js")) {
       hasRewrittenReactSourceMaps = true;
     }
-  })
-  return {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps};
+  });
+  return { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps };
 }
 
 // Builds fail without these globals. Very likely due to the fact that
 // we're using CJS modules in an ESM environment. This will be up to the
 // user to fix in their own env, we just want to make sure we can build in our test env.
 global.__filename = url.fileURLToPath(import.meta.url);
-global.__dirname = url.fileURLToPath(new URL('.', import.meta.url));
+global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // The test suite is currently not very exhaustive and only tests the most basic
-// case where the build succeeds and the sourcemap is properly configured. We _do_not_ 
+// case where the build succeeds and the sourcemap is properly configured. We _do_not_
 // test invalid configs (e.g. not generating sourcemaps etc) and our plugin does not warn
-// the user if they are not generating sourcemaps. This is up to the user to configure, 
+// the user if they are not generating sourcemaps. This is up to the user to configure,
 // but could be subject to change in case it ends up being confusing. The alternative would
 // be to throw an error if sourcemaps are not generated, but this might cause inconvenience
 // for users who dont want sourcemaps and would have to disable the plugin.
 test("esbuild", async () => {
-  assertCleanEnv()
+  assertCleanEnv();
   await esbuild.build({
     entryPoints: [JS_ENTRY_POINT],
     outdir: BUILD_OUTPUT_PATH,
     sourcemap: true,
     bundle: true,
-    define: { 'process.env.NODE_ENV': '"production"' },
+    define: { "process.env.NODE_ENV": '"production"' },
     plugins: [pkg.EsbuildReactSourcemapsPlugin()],
   });
 
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
   assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
 
 test("webpack", async () => {
-  assertCleanEnv()
-  webpack({
-    entry: JS_ENTRY_POINT,
-    output: {
-      path: BUILD_OUTPUT_PATH,
-      filename: "index.js",
+  assertCleanEnv();
+  webpack(
+    {
+      entry: JS_ENTRY_POINT,
+      output: {
+        path: BUILD_OUTPUT_PATH,
+        filename: "index.js",
+      },
+      mode: "production",
+      devtool: "source-map",
+      plugins: [pkg.WebpackReactSourcemapsPlugin()],
     },
-    mode: "production",
-    devtool: "source-map",
-    plugins: [pkg.WebpackReactSourcemapsPlugin()],
-  }, (err, stats) => {
-    if (err || stats.hasErrors()) {
-      throw new Error("webpack build failed");
+    (err, stats) => {
+      if (err || stats.hasErrors()) {
+        throw new Error("webpack build failed");
+      }
     }
-  })
+  );
 
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
   assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
@@ -205,27 +211,29 @@ test("rollup", async () => {
       rollupPluginCommonJS(),
       rollupDefinePlugin({
         preventAssignment: true, // silence console warning
-        "process.env.NODE_ENV": JSON.stringify("production")
+        "process.env.NODE_ENV": JSON.stringify("production"),
       }),
-      rollupNodeResolvePlugin(), 
-      pkg.RollupReactSourcemapsPlugin()
+      rollupNodeResolvePlugin(),
+      pkg.RollupReactSourcemapsPlugin(),
     ],
-  }).then(async (bundle) => {
+  }).then(async bundle => {
     if (bundle) {
       await bundle.write({
         dir: BUILD_OUTPUT_PATH,
         sourcemap: true,
       });
-    } else throw new Error("rollup build failed to write bundle"); 
-  })
+    } else throw new Error("rollup build failed to write bundle");
+  });
 
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
   assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
 test("vite", async () => {
-  assertCleanEnv()
+  assertCleanEnv();
   await vite.build({
     root: SOURCE_DIR,
     build: {
@@ -236,14 +244,16 @@ test("vite", async () => {
         output: {
           entryFileNames: `[name].js`,
           chunkFileNames: `[name].js`,
-          assetFileNames: `[name].[ext]`
-        }
-      }
+          assetFileNames: `[name].[ext]`,
+        },
+      },
     },
     plugins: [pkg.ViteReactSourcemapsPlugin()],
   });
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
   assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
@@ -252,32 +262,74 @@ test("vite", async () => {
 // Error [ERR_REQUIRE_ESM]: require() of ES Module /react-prod-sourcemaps/node_modules/string-width/index.js from /react-prod-sourcemaps/node_modules/cliui/build/index.cjs not supported.
 // Instead change the require of index.js in /react-prod-sourcemaps/node_modules/cliui/build/index.cjs to a dynamic import() which is available in all CommonJS modules.
 // ...
-test.skip("rspack", async() => {
-  assertCleanEnv()
+test.skip("rspack", async () => {
+  assertCleanEnv();
   child_process.execSync(`npx rspack build -c ${RSPACK_CONFIG_PATH}`);
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
   assert.equal(original, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
 
 test("preserve option", async () => {
-  assertCleanEnv()
+  assertCleanEnv();
   await esbuild.build({
     entryPoints: [JS_ENTRY_POINT],
     outdir: BUILD_OUTPUT_PATH,
     sourcemap: true,
     bundle: true,
-    define: { 'process.env.NODE_ENV': '"production"' },
-    plugins: [pkg.EsbuildReactSourcemapsPlugin({preserve: true})],
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({ preserve: true })],
   });
 
   await pollForSourceMap();
-  const {hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH));
-  assert.equal(hasOriginalReactSourceMaps, true, "minified react-dom source maps were found in original sourcemap");
-  assert.equal(hasRewrittenReactSourceMaps, false, "react-dom source maps were not rewritten in original sourcemap");
+  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
+  );
+  assert.equal(
+    hasOriginalReactSourceMaps,
+    true,
+    "minified react-dom source maps were found in original sourcemap"
+  );
+  assert.equal(
+    hasRewrittenReactSourceMaps,
+    false,
+    "react-dom source maps were not rewritten in original sourcemap"
+  );
 
-  const {hasOriginalReactSourceMaps: hasOriginalReactSourceMapsInRemappedSourceMap, hasRewrittenReactSourceMaps: hasRewrittenReactSourceMapsInRemappedSourceMap} = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_REMAPPED_PATH));
-  assert.equal(hasOriginalReactSourceMapsInRemappedSourceMap, false, "minified react-dom source maps were found in rewritten sourcemap");
-  assert.equal(hasRewrittenReactSourceMapsInRemappedSourceMap, true, "react-dom source maps were not rewritten in rewritten sourcemap");
+  const {
+    hasOriginalReactSourceMaps: hasOriginalReactSourceMapsInRemappedSourceMap,
+    hasRewrittenReactSourceMaps: hasRewrittenReactSourceMapsInRemappedSourceMap,
+  } = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_REMAPPED_PATH));
+  assert.equal(
+    hasOriginalReactSourceMapsInRemappedSourceMap,
+    false,
+    "minified react-dom source maps were found in rewritten sourcemap"
+  );
+  assert.equal(
+    hasRewrittenReactSourceMapsInRemappedSourceMap,
+    true,
+    "react-dom source maps were not rewritten in rewritten sourcemap"
+  );
+});
+
+test("throws in strict mode if no sourcemap is generated", async () => {
+  assertCleanEnv();
+
+  // I tried using assert.throws, but it seems to have a race condition
+  // with our test.afterEach and the build would fail with "failed to resolve index.js"
+  // as if it did not exist on disk? I'm not sure what's going on, but just await it synchronously
+  const error = await esbuild
+    .build({
+      entryPoints: [JS_ENTRY_POINT],
+      outdir: BUILD_OUTPUT_PATH,
+      // sourcemap: true, Disabled on purpose
+      define: { "process.env.NODE_ENV": '"production"' },
+      plugins: [pkg.EsbuildReactSourcemapsPlugin({ mode: "strict" })],
+    })
+    .catch(e => e);
+
+  assert.match(error.message, /ReactSourceMaps: ❌ No sourcemaps found in bundle./);
 });
