@@ -60,7 +60,7 @@ export function loadSourcemap(filePath: string): SourceMapV3 {
 
 function loadExistingReactDOMSourcemap(
   version: string,
-  options: { verbose?: boolean } = {verbose: false}
+  options: { verbose?: boolean } = { verbose: false }
 ): SourceMapV3 {
   const filename = "react-dom.production.min.js.map";
   const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
@@ -118,7 +118,7 @@ interface RewriteSourcemapResult {
 // - Swap them out by rewriting the sourcemap
 export function maybeRewriteSourcemapWithReactProd(
   inputSourcemap: SourceMapV3,
-  options: { verbose?: boolean } = {verbose: false}
+  options: { verbose?: boolean } = { verbose: false }
 ): RewriteSourcemapResult {
   const isValidSourcemap = isSourceMapV3(inputSourcemap);
   if (!isValidSourcemap) {
@@ -143,6 +143,11 @@ export function maybeRewriteSourcemapWithReactProd(
 
     const versionEntry: ReactVersion | null = findMatchingReactDOMVersion(file, inputSourcemap);
     if (!versionEntry) {
+      if (options.verbose) {
+        log(
+          "Could not resolve sourcemaps for react version. Please file an issue with react-prod-sourcemaps."
+        );
+      }
       return null;
     }
 
