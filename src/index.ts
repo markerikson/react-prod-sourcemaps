@@ -63,7 +63,7 @@ function loadExistingReactDOMSourcemap(
   options: { verbose?: boolean } = { verbose: false }
 ): SourceMapV3 {
   const filename = "react-dom.production.min.js.map";
-  const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
+  const filePath = path.join(__dirname, "../../assets", "react-dom", version, filename);
 
   if (options.verbose) {
     log("Loading original ReactDOM sourcemap from: ", filePath);

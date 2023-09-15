@@ -9,8 +9,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "type": "module",
   "types": "./lib/index.d.ts",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
   "exports": {
     ".": {
       "import": "./esm/index.mjs",
@@ -21,11 +22,11 @@
     "react-prod-sourcemaps": "lib/cjs/main.js"
   },
   "scripts": {
-    "build": "rm -rf ./lib && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && tsc -p tsconfig.types.json",
+    "build": "rm -rf ./lib && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && tsc -p tsconfig.types.json && ./bin/build-types.sh",
     "prepack": "yarn build",
     "start": "tsx ./src/main.ts",
-    "test": "node --loader tsx --test src/*.test.ts",
-    "test:watch": "node --watch --loader tsx --test src/*.test.ts"
+    "test": "node --loader tsx --test src/*.test.js",
+    "test:watch": "node --watch --loader tsx --test src/*.test.js"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",

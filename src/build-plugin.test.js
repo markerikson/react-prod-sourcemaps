@@ -1,33 +1,32 @@
-import fs from "node:fs";
-import test from "node:test";
-import path from "node:path";
-import assert from "node:assert";
-import * as url from "node:url";
-import child_process from "node:child_process";
+const fs = require("node:fs");
+const test = require("node:test");
+const path = require("node:path");
+const assert = require("node:assert");
+const child_process = require("node:child_process");
 
-import remapping from "@ampproject/remapping";
-import esbuild from "esbuild";
-import webpack from "webpack";
-import { rollup } from "rollup";
-import * as vite from "vite";
+const remapping = require("@ampproject/remapping");
+const esbuild = require("esbuild");
+const webpack = require("webpack");
+const { rollup } = require("rollup");
+const vite = require("vite");
 
 // If this is not used, rollup does not resolve the react and react-dom imports
 // and marks them as external which means they dont end up in our bundle
 // and we cant rewrite their source maps.
-import { nodeResolve as rollupNodeResolvePlugin } from "@rollup/plugin-node-resolve";
-import rollupDefinePlugin from "@rollup/plugin-replace";
-import rollupPluginCommonJS from "@rollup/plugin-commonjs";
+const { nodeResolve: rollupNodeResolvePlugin } = require("@rollup/plugin-node-resolve");
+const rollupDefinePlugin = require("@rollup/plugin-replace");
+const rollupPluginCommonJS = require("@rollup/plugin-commonjs");
 
-import * as pkg from "./index";
+const pkg = require("../lib/cjs");
 
 // Poll for the source map to be generated.
 function pollForSourceMap() {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let start = Date.now();
     const interval = setInterval(() => {
       if (fs.existsSync(EXPECTED_SOURCEMAP_PATH)) {
         clearInterval(interval);
-        resolve();
+        resolve(void 0);
       }
       if (Date.now() - start > 10_000) {
         clearInterval(interval);
@@ -143,8 +142,8 @@ function hasMinifiedSourcemaps(map) {
 // Builds fail without these globals. Very likely due to the fact that
 // we're using CJS modules in an ESM environment. This will be up to the
 // user to fix in their own env, we just want to make sure we can build in our test env.
-global.__filename = url.fileURLToPath(import.meta.url);
-global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
+// global.__filename = url.fileURLToPath(import.meta.url);
+// global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // The test suite is currently not very exhaustive and only tests the most basic
 // case where the build succeeds and the sourcemap is properly configured. We _do_not_
