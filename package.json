@@ -9,7 +9,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "types": "./lib/index.d.ts",
+  "types": "./lib/types/index.d.ts",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "exports": {
