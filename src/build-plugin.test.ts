@@ -22,7 +22,7 @@ import * as pkg from "./index";
 
 // Poll for the source map to be generated.
 function pollForSourceMap() {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     let start = Date.now();
     const interval = setInterval(() => {
       if (fs.existsSync(EXPECTED_SOURCEMAP_PATH)) {
@@ -161,7 +161,7 @@ test("esbuild", async () => {
     sourcemap: true,
     bundle: true,
     define: { "process.env.NODE_ENV": '"production"' },
-    plugins: [pkg.EsbuildReactSourcemapsPlugin()],
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({})],
   });
 
   await pollForSourceMap();
@@ -186,7 +186,7 @@ test("webpack", async () => {
       plugins: [pkg.WebpackReactSourcemapsPlugin()],
     },
     (err, stats) => {
-      if (err || stats.hasErrors()) {
+      if (err || stats?.hasErrors()) {
         throw new Error("webpack build failed");
       }
     }
@@ -238,7 +238,7 @@ test("vite", async () => {
     root: SOURCE_DIR,
     build: {
       write: true,
-      outdir: BUILD_OUTPUT_PATH,
+      outDir: BUILD_OUTPUT_PATH,
       sourcemap: true,
       rollupOptions: {
         output: {
@@ -269,7 +269,7 @@ test.skip("rspack", async () => {
   const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(original, false, "minified react-dom source maps were found");
+  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
 

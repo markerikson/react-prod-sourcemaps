@@ -82,7 +82,7 @@ function rewireSourceMapsFromGeneratedAssetList(
   }
 }
 
-const unplugin = createUnplugin(
+const unplugin = createUnplugin<ReactSourcemapsPluginOptions | undefined>(
   (pluginOptions: ReactSourcemapsPluginOptions = { debug: false, preserve: false }) => {
     return {
       name: PLUGIN_NAME,

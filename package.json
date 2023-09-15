@@ -10,16 +10,22 @@
     "access": "public"
   },
   "type": "module",
-  "main": "lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./esm/index.mjs",
+      "require": "./cjs/index.cjs"
+    }
+  },
   "bin": {
-    "react-prod-sourcemaps": "lib/main.js"
+    "react-prod-sourcemaps": "lib/cjs/main.js"
   },
   "scripts": {
-    "build": "rm -rf ./lib && tsc",
+    "build": "rm -rf ./lib && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && tsc -p tsconfig.types.json",
     "prepack": "yarn build",
     "start": "tsx ./src/main.ts",
-    "test": "node --loader tsx --test src/*.test.js",
-    "test:watch": "node --watch --loader tsx --test src/*.test.js"
+    "test": "node --loader tsx --test src/*.test.ts",
+    "test:watch": "node --watch --loader tsx --test src/*.test.ts"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
