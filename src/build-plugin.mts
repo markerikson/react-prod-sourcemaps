@@ -1,8 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { log, error } from "console";
+import { log, error } from "node:console";
 import { createUnplugin } from "unplugin";
-import { maybeRewriteSourcemapWithReactProd, loadSourcemap } from "./index";
+
+import { maybeRewriteSourcemapWithReactProd, loadSourcemap } from "./index.mjs";
 
 export interface ReactSourcemapsPluginOptions {
   debug?: boolean;

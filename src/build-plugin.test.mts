@@ -1,23 +1,25 @@
-const fs = require("node:fs");
-const test = require("node:test");
-const path = require("node:path");
-const assert = require("node:assert");
-const child_process = require("node:child_process");
+import fs from "node:fs";
+import test from "node:test";
+import path from "node:path";
+import url from "node:url";
+import assert from "node:assert";
+import child_process from "node:child_process";
 
-const remapping = require("@ampproject/remapping");
-const esbuild = require("esbuild");
-const webpack = require("webpack");
-const { rollup } = require("rollup");
-const vite = require("vite");
+import remapping from "@ampproject/remapping";
+import esbuild from "esbuild";
+import webpack from "webpack";
+import { rollup } from "rollup";
+import * as vite from "vite";
 
 // If this is not used, rollup does not resolve the react and react-dom imports
 // and marks them as external which means they dont end up in our bundle
 // and we cant rewrite their source maps.
-const { nodeResolve: rollupNodeResolvePlugin } = require("@rollup/plugin-node-resolve");
-const rollupDefinePlugin = require("@rollup/plugin-replace");
-const rollupPluginCommonJS = require("@rollup/plugin-commonjs");
+import { nodeResolve as rollupNodeResolvePlugin } from "@rollup/plugin-node-resolve";
+import rollupDefinePlugin from "@rollup/plugin-replace";
+import rollupPluginCommonJS from "@rollup/plugin-commonjs";
 
-const pkg = require("../lib/cjs");
+// @ts-ignore silence importing of ts modules warning
+import * as pkg from "./index.mts";
 
 // Poll for the source map to be generated.
 function pollForSourceMap() {
@@ -64,7 +66,7 @@ const HTMLTemplate = `
 </body>
 `;
 
-const RSPackConfigTemplate = (JS_ENTRY_POINT, BUILD_OUTPUT_PATH) => `
+const RSPackConfigTemplate = (JS_ENTRY_POINT: string, BUILD_OUTPUT_PATH: string) => `
 import * as pkg from "./../index";
 module.exports = {
   entry: {
@@ -122,7 +124,7 @@ process.on("exit", () => {
   teardown();
 });
 
-function hasMinifiedSourcemaps(map) {
+function hasMinifiedSourcemaps(map: any) {
   let hasOriginalReactSourceMaps = false;
   let hasRewrittenReactSourceMaps = false;
 
@@ -138,6 +140,9 @@ function hasMinifiedSourcemaps(map) {
   });
   return { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps };
 }
+
+global.__filename = url.fileURLToPath(import.meta.url);
+global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // Builds fail without these globals. Very likely due to the fact that
 // we're using CJS modules in an ESM environment. This will be up to the
