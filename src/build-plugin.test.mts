@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import test from "node:test";
 import path from "node:path";
+import url from "node:url";
 import assert from "node:assert";
-import * as url from "node:url";
 import child_process from "node:child_process";
 
 import remapping from "@ampproject/remapping";
@@ -18,7 +18,8 @@ import { nodeResolve as rollupNodeResolvePlugin } from "@rollup/plugin-node-reso
 import rollupDefinePlugin from "@rollup/plugin-replace";
 import rollupPluginCommonJS from "@rollup/plugin-commonjs";
 
-import * as pkg from "./index";
+// @ts-ignore silence importing of ts modules warning
+import * as pkg from "./index.mts";
 
 // Poll for the source map to be generated.
 function pollForSourceMap() {
@@ -27,7 +28,7 @@ function pollForSourceMap() {
     const interval = setInterval(() => {
       if (fs.existsSync(EXPECTED_SOURCEMAP_PATH)) {
         clearInterval(interval);
-        resolve();
+        resolve(void 0);
       }
       if (Date.now() - start > 10_000) {
         clearInterval(interval);
@@ -65,7 +66,7 @@ const HTMLTemplate = `
 </body>
 `;
 
-const RSPackConfigTemplate = (JS_ENTRY_POINT, BUILD_OUTPUT_PATH) => `
+const RSPackConfigTemplate = (JS_ENTRY_POINT: string, BUILD_OUTPUT_PATH: string) => `
 import * as pkg from "./../index";
 module.exports = {
   entry: {
@@ -123,7 +124,7 @@ process.on("exit", () => {
   teardown();
 });
 
-function hasMinifiedSourcemaps(map) {
+function hasMinifiedSourcemaps(map: any) {
   let hasOriginalReactSourceMaps = false;
   let hasRewrittenReactSourceMaps = false;
 
@@ -140,11 +141,14 @@ function hasMinifiedSourcemaps(map) {
   return { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps };
 }
 
+global.__filename = url.fileURLToPath(import.meta.url);
+global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
+
 // Builds fail without these globals. Very likely due to the fact that
 // we're using CJS modules in an ESM environment. This will be up to the
 // user to fix in their own env, we just want to make sure we can build in our test env.
-global.__filename = url.fileURLToPath(import.meta.url);
-global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
+// global.__filename = url.fileURLToPath(import.meta.url);
+// global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // The test suite is currently not very exhaustive and only tests the most basic
 // case where the build succeeds and the sourcemap is properly configured. We _do_not_
@@ -161,7 +165,7 @@ test("esbuild", async () => {
     sourcemap: true,
     bundle: true,
     define: { "process.env.NODE_ENV": '"production"' },
-    plugins: [pkg.EsbuildReactSourcemapsPlugin()],
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({})],
   });
 
   await pollForSourceMap();
@@ -186,7 +190,7 @@ test("webpack", async () => {
       plugins: [pkg.WebpackReactSourcemapsPlugin()],
     },
     (err, stats) => {
-      if (err || stats.hasErrors()) {
+      if (err || stats?.hasErrors()) {
         throw new Error("webpack build failed");
       }
     }
@@ -238,7 +242,7 @@ test("vite", async () => {
     root: SOURCE_DIR,
     build: {
       write: true,
-      outdir: BUILD_OUTPUT_PATH,
+      outDir: BUILD_OUTPUT_PATH,
       sourcemap: true,
       rollupOptions: {
         output: {
@@ -269,7 +273,7 @@ test.skip("rspack", async () => {
   const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(original, false, "minified react-dom source maps were found");
+  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
   assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
 });
 

@@ -5,8 +5,8 @@ import fs from "fs";
 import path from "path";
 import { log } from "console";
 
-import { knownReactProdVersions } from "./reactVersions";
-import { loadSourcemap, maybeRewriteSourcemapWithReactProd } from "./index";
+import { knownReactProdVersions } from "./reactVersions.mjs";
+import { loadSourcemap, maybeRewriteSourcemapWithReactProd } from "./index.mjs";
 
 const argv = yargs
   .option("reactVersions", {

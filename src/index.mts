@@ -6,9 +6,9 @@ import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
 import resolveUri from "@jridgewell/resolve-uri";
 
-import * as BuildPlugins from "./build-plugin";
-import { ReactVersion, hashesToVersions } from "./reactVersions";
-export { knownReactProdVersions, hashesToVersions } from "./reactVersions";
+import * as BuildPlugins from "./build-plugin.mjs";
+import { ReactVersion, hashesToVersions } from "./reactVersions.mjs";
+export { knownReactProdVersions, hashesToVersions } from "./reactVersions.mjs";
 
 // Borrowed from `trace-mapping` internals
 function resolve(input: string, base: string | undefined): string {
@@ -170,7 +170,7 @@ export function maybeRewriteSourcemapWithReactProd(
   };
 }
 
-export type { ReactSourcemapsPluginOptions } from "./build-plugin";
+export type { ReactSourcemapsPluginOptions } from "./build-plugin.mjs";
 export const ViteReactSourcemapsPlugin = BuildPlugins.ViteReactSourcemapsPlugin;
 export const RollupReactSourcemapsPlugin = BuildPlugins.RollupReactSourcemapsPlugin;
 export const WebpackReactSourcemapsPlugin = BuildPlugins.WebpackReactSourcemapsPlugin;

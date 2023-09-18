@@ -9,17 +9,31 @@
   "publishConfig": {
     "access": "public"
   },
-  "type": "module",
-  "main": "lib/index.js",
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.mjs",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/index.d.mts",
+        "default": "./lib/index.mjs"
+      },
+      "require": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.cjs"
+      }
+    }
+  },
   "bin": {
-    "react-prod-sourcemaps": "lib/main.js"
+    "react-prod-sourcemaps": "lib/index.cjs"
   },
   "scripts": {
-    "build": "rm -rf ./lib && tsc",
+    "dev": "tsup --watch",
+    "build": "rm -rf ./lib && tsup",
     "prepack": "yarn build",
-    "start": "tsx ./src/main.ts",
-    "test": "node --loader tsx --test src/*.test.js",
-    "test:watch": "node --watch --loader tsx --test src/*.test.js"
+    "start": "tsx ./src/main.mts",
+    "test": "node --experimental-modules --loader tsx --test src/*.test.mts",
+    "test:watch": "node --watch --loader tsx --test src/*.test.mts"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
@@ -42,6 +56,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup": "^3.28.1",
+    "tsup": "^7.2.0",
     "tsx": "^3.12.8",
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
