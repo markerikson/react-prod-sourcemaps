@@ -1,6 +1,7 @@
 import remapping from "@ampproject/remapping";
 import fs from "fs";
 import path from "path";
+import url from "node:url";
 import { log } from "console";
 import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
@@ -9,6 +10,14 @@ import resolveUri from "@jridgewell/resolve-uri";
 import * as BuildPlugins from "./build-plugin.mjs";
 import { ReactVersion, hashesToVersions, uniqueArtifactFilenames } from "./reactVersions.mjs";
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions.mjs";
+
+function getDirname() {
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
+  const dirname = url.fileURLToPath(new URL(".", import.meta.url));
+  return dirname;
+}
 
 // Borrowed from `trace-mapping` internals
 function resolve(input: string, base: string | undefined): string {
@@ -64,7 +73,7 @@ function loadExistingReactSourcemap(
 ): SourceMapV3 {
   const filename = `${versionEntry.filename}.map`;
   const filePath = path.join(
-    __dirname,
+    getDirname(),
     "../assets",
     versionEntry.package,
     versionEntry.version,
@@ -114,7 +123,7 @@ function findMatchingReactVersion(
 interface RewriteSourcemapResult {
   outputSourcemap: SourceMapV3;
   rewroteSourcemap: boolean;
-  reactVersion: ReactVersion | null;
+  reactVersions: ReactVersion[] | null;
 }
 
 // Roughly, the operation performed here is:
@@ -163,17 +172,14 @@ export function maybeRewriteSourcemapWithReactProd(
     return loadExistingReactSourcemap(versionEntry, options) as SourceMapInput;
   });
 
-  if (reactVersions.length > 1 && options.verbose) {
-    log(
-      "Found multiple React versions:",
-      reactVersions.map(v => v.version)
-    );
+  if (reactVersions.length && options.verbose) {
+    log("Found React entries:", reactVersions);
   }
 
   return {
     outputSourcemap: remapped,
     rewroteSourcemap: reactVersions.length > 0,
-    reactVersion: reactVersions[0] ?? null,
+    reactVersions: reactVersions.length > 0 ? reactVersions : null,
   };
 }
 
