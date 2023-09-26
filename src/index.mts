@@ -7,7 +7,7 @@ import { SourceMapInput } from "@jridgewell/trace-mapping";
 import resolveUri from "@jridgewell/resolve-uri";
 
 import * as BuildPlugins from "./build-plugin.mjs";
-import { ReactVersion, hashesToVersions } from "./reactVersions.mjs";
+import { ReactVersion, hashesToVersions, uniqueArtifactFilenames } from "./reactVersions.mjs";
 export { knownReactProdVersions, hashesToVersions } from "./reactVersions.mjs";
 
 // Borrowed from `trace-mapping` internals
@@ -58,20 +58,26 @@ export function loadSourcemap(filePath: string): SourceMapV3 {
   return maybeSourcemap;
 }
 
-function loadExistingReactDOMSourcemap(
-  version: string,
+function loadExistingReactSourcemap(
+  versionEntry: ReactVersion,
   options: { verbose?: boolean } = { verbose: false }
 ): SourceMapV3 {
-  const filename = "react-dom.production.min.js.map";
-  const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
+  const filename = `${versionEntry.filename}.map`;
+  const filePath = path.join(
+    __dirname,
+    "../assets",
+    versionEntry.package,
+    versionEntry.version,
+    filename
+  );
 
   if (options.verbose) {
-    log("Loading original ReactDOM sourcemap from: ", filePath);
+    log(`Loading original ${versionEntry.package} sourcemap from: `, filePath);
   }
   return loadSourcemap(filePath);
 }
 
-function findMatchingReactDOMVersion(
+function findMatchingReactVersion(
   reactDomFilename: string,
   inputSourcemap: SourceMapV3
 ): ReactVersion {
@@ -111,7 +117,7 @@ interface RewriteSourcemapResult {
   reactVersion: ReactVersion | null;
 }
 
-// Rougly, the operation performed here is:
+// Roughly, the operation performed here is:
 // - Find the react-dom.production.min.js file in our sourcemap
 // - Find the version of React that matches the contents of that file
 // - Load the original sourcemap for that version of React
@@ -128,20 +134,21 @@ export function maybeRewriteSourcemapWithReactProd(
   const reactVersions: ReactVersion[] = [];
 
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
-    if (!file.includes("react-dom.production.min")) {
+    const baseFilename = path.basename(file);
+    if (!uniqueArtifactFilenames.has(baseFilename)) {
       if (options.verbose) {
-        log(`Skipping sourcemap ${file} because it does not contain react-dom.production.min`);
+        log(`Skipping sourcemap entry '${file}' because it is not a known React filename`);
       }
       return null;
     }
 
-    if (options.verbose) log("Found react-dom.production in file:", file, ctx);
-    if (!file.endsWith("react-dom.production.min.js") && options.verbose) {
-      log("Skipping non-production react-dom file:", file);
-      return;
-    }
+    if (options.verbose) log("Found possible React artifact file:", file, ctx);
+    // if (!file.endsWith("react-dom.production.min.js") && options.verbose) {
+    //   log("Skipping non-production react-dom file:", file);
+    //   return;
+    // }
 
-    const versionEntry: ReactVersion | null = findMatchingReactDOMVersion(file, inputSourcemap);
+    const versionEntry: ReactVersion | null = findMatchingReactVersion(file, inputSourcemap);
     if (!versionEntry) {
       if (options.verbose) {
         log(
@@ -153,7 +160,7 @@ export function maybeRewriteSourcemapWithReactProd(
 
     reactVersions.push(versionEntry);
     if (options.verbose) log("Found matching React version:", versionEntry.version);
-    return loadExistingReactDOMSourcemap(versionEntry.version, options) as SourceMapInput;
+    return loadExistingReactSourcemap(versionEntry, options) as SourceMapInput;
   });
 
   if (reactVersions.length > 1 && options.verbose) {
