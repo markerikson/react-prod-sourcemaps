@@ -8,9 +8,21 @@ export interface ReactVersion {
 export const knownReactProdVersions: ReactVersion[] = [
   {
     version: "17.0.2",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "d3ea88ce03534dc2f3060f4ca55f26dfa26466b2077f61ff401fba2529567254",
+  },
+  {
+    version: "17.0.2",
     package: "react-dom",
     filename: "react-dom.production.min.js",
     contentHash: "aa5e027a236b156f5e833ae8a86e94474130b78f0b70386c1b213417d0013910",
+  },
+  {
+    version: "17.0.2",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "c6d18f6f0b8479f2552da042d37e3b70bb4859251bc05e7bd3e9b100d68f2a30",
   },
   {
     version: "18.1.0",
