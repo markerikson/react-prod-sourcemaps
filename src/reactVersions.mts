@@ -14,9 +14,21 @@ export const knownReactProdVersions: ReactVersion[] = [
   },
   {
     version: "18.1.0",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "5350b7eb5e15e518dd4f0105d7ab04ce2c97169a3e11690d13364aae0bf8b98f",
+  },
+  {
+    version: "18.1.0",
     package: "react-dom",
     filename: "react-dom.production.min.js",
     contentHash: "db70122e66c434e360539319ef318959f303a8792417e3cbb14abb6e56294191",
+  },
+  {
+    version: "18.1.0",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "115a2baefc4c008bc89cab1062457dfb4944efd7b841fd4d44016efe0bd5a95f",
   },
   {
     version: "18.2.0",
