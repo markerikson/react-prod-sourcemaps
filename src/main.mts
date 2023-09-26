@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { log } from "console";
 
-import { knownReactProdVersions } from "./reactVersions.mjs";
+import { availableSourcemapDescriptors } from "./reactVersions.mjs";
 import { loadSourcemap, maybeRewriteSourcemapWithReactProd } from "./index.mjs";
 
 const argv = yargs
@@ -31,7 +31,7 @@ const argv = yargs
 
 function main() {
   if (argv.reactVersions) {
-    log("Available React versions:", knownReactProdVersions);
+    log("Available React versions:", availableSourcemapDescriptors);
     return;
   }
 

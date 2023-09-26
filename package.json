@@ -33,7 +33,8 @@
     "prepack": "yarn build",
     "start": "tsx ./src/main.mts",
     "test": "node --experimental-modules --loader tsx --test src/*.test.mts",
-    "test:watch": "node --watch --loader tsx --test src/*.test.mts"
+    "test:watch": "node --watch --loader tsx --test src/*.test.mts",
+    "test:only": "node --watch --test-only --loader tsx --test src/*.test.mts"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",

@@ -7,8 +7,7 @@ import { SourceMapInput } from "@jridgewell/trace-mapping";
 import resolveUri from "@jridgewell/resolve-uri";
 
 import * as BuildPlugins from "./build-plugin.mjs";
-import { ReactVersion, hashesToVersions } from "./reactVersions.mjs";
-export { knownReactProdVersions, hashesToVersions } from "./reactVersions.mjs";
+import { ReactVersion, hashesToSourcemapDescriptors } from "./reactVersions.mjs";
 
 // Borrowed from `trace-mapping` internals
 function resolve(input: string, base: string | undefined): string {
@@ -58,16 +57,23 @@ export function loadSourcemap(filePath: string): SourceMapV3 {
   return maybeSourcemap;
 }
 
-function loadExistingReactDOMSourcemap(
-  version: string,
+function loadExistingSourcemap(
+  versionEntry: ReactVersion,
   options: { verbose?: boolean } = { verbose: false }
 ): SourceMapV3 {
-  const filename = "react-dom.production.min.js.map";
-  const filePath = path.join(__dirname, "../assets", "react-dom", version, filename);
+  const filename = versionEntry.filename + ".map";
+  const filePath = path.join(
+    __dirname,
+    "../assets",
+    versionEntry.package,
+    versionEntry.version,
+    filename
+  );
 
   if (options.verbose) {
-    log("Loading original ReactDOM sourcemap from: ", filePath);
+    log("Loading sourcemap from: ", filePath);
   }
+
   return loadSourcemap(filePath);
 }
 
@@ -86,6 +92,7 @@ function findMatchingReactDOMVersion(
       return normalizedPath === reactDomFilename;
     });
   }
+
   if (filenameIndex === -1) {
     throw new Error(`Cannot find '${reactDomFilename}' in input sourcemap`);
   }
@@ -96,7 +103,7 @@ function findMatchingReactDOMVersion(
   }
 
   const contentHash = hashSHA256(sourceContents);
-  const versionEntry = hashesToVersions[contentHash];
+  const versionEntry = hashesToSourcemapDescriptors[contentHash];
 
   if (!versionEntry) {
     throw new Error(`Cannot find version for '${reactDomFilename}'`);
@@ -116,6 +123,8 @@ interface RewriteSourcemapResult {
 // - Find the version of React that matches the contents of that file
 // - Load the original sourcemap for that version of React
 // - Swap them out by rewriting the sourcemap
+const SUPPORTED_PACKAGES = /(react-dom\.profiling\.min\.js|react-dom\.production\.min\.js)/;
+
 export function maybeRewriteSourcemapWithReactProd(
   inputSourcemap: SourceMapV3,
   options: { verbose?: boolean } = { verbose: false }
@@ -128,32 +137,39 @@ export function maybeRewriteSourcemapWithReactProd(
   const reactVersions: ReactVersion[] = [];
 
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
-    if (!file.includes("react-dom.production.min")) {
+    const matchedPackage = SUPPORTED_PACKAGES.exec(ctx.source);
+    if (matchedPackage === null) {
       if (options.verbose) {
-        log(`Skipping sourcemap ${file} because it does not contain react-dom.production.min`);
+        log(`Skipping sourcemap ${file} because it does not contain a sourcemap for remapping`);
       }
       return null;
     }
 
-    if (options.verbose) log("Found react-dom.production in file:", file, ctx);
-    if (!file.endsWith("react-dom.production.min.js") && options.verbose) {
-      log("Skipping non-production react-dom file:", file);
-      return;
-    }
+    if (options.verbose) log(`Found ${matchedPackage} in file:`, ctx);
 
     const versionEntry: ReactVersion | null = findMatchingReactDOMVersion(file, inputSourcemap);
     if (!versionEntry) {
       if (options.verbose) {
         log(
-          "Could not resolve sourcemaps for react version. Please file an issue with react-prod-sourcemaps."
+          `Could not resolve sourcemaps for ${matchedPackage} version. Please file an issue with react-prod-sourcemaps.`
         );
       }
       return null;
     }
 
     reactVersions.push(versionEntry);
-    if (options.verbose) log("Found matching React version:", versionEntry.version);
-    return loadExistingReactDOMSourcemap(versionEntry.version, options) as SourceMapInput;
+    if (options.verbose)
+      log(`Found matching version for ${matchedPackage[0]}:`, versionEntry.version);
+
+    const sourcemap = loadExistingSourcemap(versionEntry);
+
+    if (!sourcemap || !isSourceMapV3(sourcemap)) {
+      throw new Error(
+        `Failed to load expected sourcemap for ${matchedPackage[0]} version ${versionEntry.version}`
+      );
+    }
+
+    return sourcemap as SourceMapInput;
   });
 
   if (reactVersions.length > 1 && options.verbose) {
