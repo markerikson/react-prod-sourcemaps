@@ -51,7 +51,7 @@ function App() {
 ReactDOM.render(App, document.getElementById("root"));
 `;
 
-const ReactDOMProfilingTemplate = `
+const ReactDOMTemplate = `
 import ReactDOM from "react-dom/profiling";
 
 function App() {
@@ -62,6 +62,12 @@ function App() {
 
 // Bailout from dead code elimination
 ReactDOM.render(App, document.getElementById("root"));
+`;
+
+const ReactOnlyTemplate = `
+import * as React from "react";
+
+const ctx = React.createContext(null);
 `;
 
 const HTMLTemplate = `
@@ -136,6 +142,10 @@ process.on("exit", () => {
 });
 
 const PKG = {
+  react: {
+    original: "react.production.min.js",
+    rewritten: "react.production.js",
+  },
   "react-dom": {
     original: "react-dom.production.min.js",
     rewritten: "react-dom.production.js",
@@ -151,11 +161,11 @@ function hasMinifiedSourcemaps(map: any, pkg = PKG["react-dom"]) {
   let hasRewrittenSourceMap = false;
 
   remapping(map, (file, ctx) => {
-    // check if source map contains minified react-dom
+    // check if source map contains minified file
     if (file.includes(pkg.original)) {
       hasOriginalSourceMap = true;
     }
-    // check if source map contains our rewritten react-dom sourcemap
+    // check if source map contains our rewritten file
     if (file.includes(pkg.rewritten)) {
       hasRewrittenSourceMap = true;
     }
@@ -299,11 +309,41 @@ test.skip("rspack", async () => {
   assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
 });
 
-// @TODO enable once react-dom/profiling sourcemaps are added
-test.skip("react-dom/profiling", async () => {
+test("react", async () => {
   assertCleanEnv();
 
-  fs.writeFileSync(JS_ENTRY_POINT, ReactDOMProfilingTemplate);
+  fs.writeFileSync(JS_ENTRY_POINT, ReactOnlyTemplate);
+  await esbuild.build({
+    entryPoints: [JS_ENTRY_POINT],
+    outdir: BUILD_OUTPUT_PATH,
+    sourcemap: true,
+    bundle: true,
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({ mode: "strict" })],
+  });
+
+  await pollForSourceMap();
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH),
+    PKG["react"]
+  );
+
+  assert.equal(
+    hasOriginalSourceMap,
+    false,
+    "minified react source maps were found in original sourcemap"
+  );
+  assert.equal(
+    hasRewrittenSourceMap,
+    true,
+    "react source maps were not rewritten in original sourcemap"
+  );
+});
+
+test("react-dom/profiling", async () => {
+  assertCleanEnv();
+
+  fs.writeFileSync(JS_ENTRY_POINT, ReactDOMTemplate);
   await esbuild.build({
     entryPoints: [JS_ENTRY_POINT],
     outdir: BUILD_OUTPUT_PATH,
