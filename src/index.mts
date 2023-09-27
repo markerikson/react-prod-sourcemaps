@@ -1,6 +1,7 @@
 import remapping from "@ampproject/remapping";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { log } from "console";
 import { createHash } from "node:crypto";
 import { SourceMapInput } from "@jridgewell/trace-mapping";
@@ -8,6 +9,13 @@ import resolveUri from "@jridgewell/resolve-uri";
 
 import * as BuildPlugins from "./build-plugin.mjs";
 import { ReactVersion, hashesToSourcemapDescriptors } from "./reactVersions.mjs";
+
+function getDirname() {
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
+  return fileURLToPath(new URL(".", import.meta.url));
+}
 
 // Borrowed from `trace-mapping` internals
 function resolve(input: string, base: string | undefined): string {
@@ -63,7 +71,7 @@ function loadExistingSourcemap(
 ): SourceMapV3 {
   const filename = versionEntry.filename + ".map";
   const filePath = path.join(
-    __dirname,
+    getDirname(),
     "../assets",
     versionEntry.package,
     versionEntry.version,

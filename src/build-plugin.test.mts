@@ -173,15 +173,6 @@ function hasMinifiedSourcemaps(map: any, pkg = PKG["react-dom"]) {
   return { hasOriginalSourceMap, hasRewrittenSourceMap };
 }
 
-global.__filename = url.fileURLToPath(import.meta.url);
-global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
-
-// Builds fail without these globals. Very likely due to the fact that
-// we're using CJS modules in an ESM environment. This will be up to the
-// user to fix in their own env, we just want to make sure we can build in our test env.
-// global.__filename = url.fileURLToPath(import.meta.url);
-// global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
-
 // The test suite is currently not very exhaustive and only tests the most basic
 // case where the build succeeds and the sourcemap is properly configured. We _do_not_
 // test invalid configs (e.g. not generating sourcemaps etc) and our plugin does not warn
