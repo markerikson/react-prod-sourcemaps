@@ -5,7 +5,7 @@ import url from "node:url";
 import assert from "node:assert";
 import child_process from "node:child_process";
 
-import remapping from "@ampproject/remapping";
+import remapping, { SourceMapInput } from "@ampproject/remapping";
 import esbuild from "esbuild";
 import webpack from "webpack";
 import { rollup } from "rollup";
@@ -39,7 +39,6 @@ function pollForSourceMap() {
 }
 
 const ReactTemplate = `
-import React from "react";
 import ReactDOM from "react-dom";
 
 function App() {
@@ -49,8 +48,26 @@ function App() {
 }
 
 // Bailout from dead code elimination
-const ctx = React.createContext();
 ReactDOM.render(App, document.getElementById("root"));
+`;
+
+const ReactDOMTemplate = `
+import ReactDOM from "react-dom/profiling";
+
+function App() {
+    // avoid jsx so we dont have to perform
+    // loader and transpile gymnastics.
+    return "Hello, world!"
+}
+
+// Bailout from dead code elimination
+ReactDOM.render(App, document.getElementById("root"));
+`;
+
+const ReactOnlyTemplate = `
+import * as React from "react";
+
+const ctx = React.createContext(null);
 `;
 
 const HTMLTemplate = `
@@ -124,31 +141,37 @@ process.on("exit", () => {
   teardown();
 });
 
-function hasMinifiedSourcemaps(map: any) {
-  let hasOriginalReactSourceMaps = false;
-  let hasRewrittenReactSourceMaps = false;
+const PKG = {
+  react: {
+    original: "react.production.min.js",
+    rewritten: "react.production.js",
+  },
+  "react-dom": {
+    original: "react-dom.production.min.js",
+    rewritten: "react-dom.production.js",
+  },
+  "react-dom/profiling": {
+    original: "react-dom.profiling.min.js",
+    rewritten: "/react-dom/profiling.js",
+  },
+};
+
+function hasMinifiedSourcemaps(map: any, pkg = PKG["react-dom"]) {
+  let hasOriginalSourceMap = false;
+  let hasRewrittenSourceMap = false;
 
   remapping(map, (file, ctx) => {
-    // check if source map contains minified react-dom
-    if (file.includes("react-dom.production.min.js")) {
-      hasOriginalReactSourceMaps = true;
+    // check if source map contains minified file
+    if (file.includes(pkg.original)) {
+      hasOriginalSourceMap = true;
     }
-    // check if source map contains our rewritten react-dom sourcemap
-    if (file.includes("react-dom.production.js")) {
-      hasRewrittenReactSourceMaps = true;
+    // check if source map contains our rewritten file
+    if (file.includes(pkg.rewritten)) {
+      hasRewrittenSourceMap = true;
     }
   });
-  return { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps };
+  return { hasOriginalSourceMap, hasRewrittenSourceMap };
 }
-
-global.__filename = url.fileURLToPath(import.meta.url);
-global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
-
-// Builds fail without these globals. Very likely due to the fact that
-// we're using CJS modules in an ESM environment. This will be up to the
-// user to fix in their own env, we just want to make sure we can build in our test env.
-// global.__filename = url.fileURLToPath(import.meta.url);
-// global.__dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // The test suite is currently not very exhaustive and only tests the most basic
 // case where the build succeeds and the sourcemap is properly configured. We _do_not_
@@ -169,11 +192,11 @@ test("esbuild", async () => {
   });
 
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
-  assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
+  assert.equal(hasOriginalSourceMap, false, "minified react-dom source maps were found");
+  assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
 });
 
 test("webpack", async () => {
@@ -197,11 +220,11 @@ test("webpack", async () => {
   );
 
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
-  assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
+  assert.equal(hasOriginalSourceMap, false, "minified react-dom source maps were found");
+  assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
 });
 test("rollup", async () => {
   // assertCleanEnv()
@@ -230,11 +253,11 @@ test("rollup", async () => {
   });
 
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
-  assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
+  assert.equal(hasOriginalSourceMap, false, "minified react-dom source maps were found");
+  assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
 });
 test("vite", async () => {
   assertCleanEnv();
@@ -255,11 +278,11 @@ test("vite", async () => {
     plugins: [pkg.ViteReactSourcemapsPlugin()],
   });
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
-  assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
+  assert.equal(hasOriginalSourceMap, false, "minified react-dom source maps were found");
+  assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
 });
 
 // This fails with the following stacktrace. Since rspack support from unplugin is experimental, skip the test for now.
@@ -270,11 +293,73 @@ test.skip("rspack", async () => {
   assertCleanEnv();
   child_process.execSync(`npx rspack build -c ${RSPACK_CONFIG_PATH}`);
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
-  assert.equal(hasOriginalReactSourceMaps, false, "minified react-dom source maps were found");
-  assert.equal(hasRewrittenReactSourceMaps, true, "react-dom source maps were not rewritten");
+  assert.equal(hasOriginalSourceMap, false, "minified react-dom source maps were found");
+  assert.equal(hasRewrittenSourceMap, true, "react-dom source maps were not rewritten");
+});
+
+test("react", async () => {
+  assertCleanEnv();
+
+  fs.writeFileSync(JS_ENTRY_POINT, ReactOnlyTemplate);
+  await esbuild.build({
+    entryPoints: [JS_ENTRY_POINT],
+    outdir: BUILD_OUTPUT_PATH,
+    sourcemap: true,
+    bundle: true,
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({ mode: "strict" })],
+  });
+
+  await pollForSourceMap();
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH),
+    PKG["react"]
+  );
+
+  assert.equal(
+    hasOriginalSourceMap,
+    false,
+    "minified react source maps were found in original sourcemap"
+  );
+  assert.equal(
+    hasRewrittenSourceMap,
+    true,
+    "react source maps were not rewritten in original sourcemap"
+  );
+});
+
+test("react-dom/profiling", async () => {
+  assertCleanEnv();
+
+  fs.writeFileSync(JS_ENTRY_POINT, ReactDOMTemplate);
+  await esbuild.build({
+    entryPoints: [JS_ENTRY_POINT],
+    outdir: BUILD_OUTPUT_PATH,
+    sourcemap: true,
+    bundle: true,
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({ mode: "strict" })],
+  });
+
+  await pollForSourceMap();
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
+    pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH),
+    PKG["react-dom/profiling"]
+  );
+
+  assert.equal(
+    hasOriginalSourceMap,
+    false,
+    "minified react-dom/profiling source maps were found in original sourcemap"
+  );
+  assert.equal(
+    hasRewrittenSourceMap,
+    true,
+    "react-dom/profiling source maps were not rewritten in original sourcemap"
+  );
 });
 
 test("preserve option", async () => {
@@ -285,35 +370,36 @@ test("preserve option", async () => {
     sourcemap: true,
     bundle: true,
     define: { "process.env.NODE_ENV": '"production"' },
-    plugins: [pkg.EsbuildReactSourcemapsPlugin({ preserve: true })],
+    plugins: [pkg.EsbuildReactSourcemapsPlugin({ preserve: true, mode: "strict" })],
   });
 
   await pollForSourceMap();
-  const { hasOriginalReactSourceMaps, hasRewrittenReactSourceMaps } = hasMinifiedSourcemaps(
+  const { hasOriginalSourceMap, hasRewrittenSourceMap } = hasMinifiedSourcemaps(
     pkg.loadSourcemap(EXPECTED_SOURCEMAP_PATH)
   );
+
   assert.equal(
-    hasOriginalReactSourceMaps,
+    hasOriginalSourceMap,
     true,
     "minified react-dom source maps were found in original sourcemap"
   );
   assert.equal(
-    hasRewrittenReactSourceMaps,
+    hasRewrittenSourceMap,
     false,
     "react-dom source maps were not rewritten in original sourcemap"
   );
 
   const {
-    hasOriginalReactSourceMaps: hasOriginalReactSourceMapsInRemappedSourceMap,
-    hasRewrittenReactSourceMaps: hasRewrittenReactSourceMapsInRemappedSourceMap,
+    hasOriginalSourceMap: hasOriginalSourceMapInRemappedSourceMap,
+    hasRewrittenSourceMap: hasRewrittenSourceMapInRemappedSourceMap,
   } = hasMinifiedSourcemaps(pkg.loadSourcemap(EXPECTED_REMAPPED_PATH));
   assert.equal(
-    hasOriginalReactSourceMapsInRemappedSourceMap,
+    hasOriginalSourceMapInRemappedSourceMap,
     false,
     "minified react-dom source maps were found in rewritten sourcemap"
   );
   assert.equal(
-    hasRewrittenReactSourceMapsInRemappedSourceMap,
+    hasRewrittenSourceMapInRemappedSourceMap,
     true,
     "react-dom source maps were not rewritten in rewritten sourcemap"
   );
