@@ -85,11 +85,11 @@ function loadExistingSourcemap(
   return loadSourcemap(filePath);
 }
 
-function findMatchingReactDOMVersion(
-  reactDomFilename: string,
+function findMatchingReactVersion(
+  reactArtifactFilename: string,
   inputSourcemap: SourceMapV3
 ): ReactVersion {
-  let filenameIndex = inputSourcemap.sources.indexOf(reactDomFilename);
+  let filenameIndex = inputSourcemap.sources.indexOf(reactArtifactFilename);
   if (filenameIndex === -1) {
     // Try one more time. Maybe the path had extra segments in it, like:
     // "webpack://_N_E/./node_modules/react-dom/cjs/react-dom.production.min.js"
@@ -97,24 +97,24 @@ function findMatchingReactDOMVersion(
       if (!filename) return false;
       // Use the same resolve logic as `remapping` to normalize the path
       const normalizedPath = resolve(filename, "");
-      return normalizedPath === reactDomFilename;
+      return normalizedPath === reactArtifactFilename;
     });
   }
 
   if (filenameIndex === -1) {
-    throw new Error(`Cannot find '${reactDomFilename}' in input sourcemap`);
+    throw new Error(`Cannot find '${reactArtifactFilename}' in input sourcemap`);
   }
 
   const sourceContents = inputSourcemap.sourcesContent?.[filenameIndex];
   if (!sourceContents) {
-    throw new Error(`Cannot find source contents for '${reactDomFilename}'`);
+    throw new Error(`Cannot find source contents for '${reactArtifactFilename}'`);
   }
 
   const contentHash = hashSHA256(sourceContents);
   const versionEntry = hashesToSourcemapDescriptors[contentHash];
 
   if (!versionEntry) {
-    throw new Error(`Cannot find version for '${reactDomFilename}'`);
+    throw new Error(`Cannot find version for '${reactArtifactFilename}'`);
   }
 
   return versionEntry;
@@ -123,7 +123,7 @@ function findMatchingReactDOMVersion(
 interface RewriteSourcemapResult {
   outputSourcemap: SourceMapV3;
   rewroteSourcemap: boolean;
-  reactVersion: ReactVersion | null;
+  reactVersions: ReactVersion[] | null;
 }
 
 // Rougly, the operation performed here is:
@@ -156,7 +156,7 @@ export function maybeRewriteSourcemapWithReactProd(
 
     if (options.verbose) log(`Found ${matchedPackage} in file:`, ctx);
 
-    const versionEntry: ReactVersion | null = findMatchingReactDOMVersion(file, inputSourcemap);
+    const versionEntry: ReactVersion | null = findMatchingReactVersion(file, inputSourcemap);
     if (!versionEntry) {
       if (options.verbose) {
         log(
@@ -181,17 +181,14 @@ export function maybeRewriteSourcemapWithReactProd(
     return sourcemap as SourceMapInput;
   });
 
-  if (reactVersions.length > 1 && options.verbose) {
-    log(
-      "Found multiple React versions:",
-      reactVersions.map(v => v.version)
-    );
+  if (reactVersions.length && options.verbose) {
+    log("Found React entries:", reactVersions);
   }
 
   return {
     outputSourcemap: remapped,
     rewroteSourcemap: reactVersions.length > 0,
-    reactVersion: reactVersions[0] ?? null,
+    reactVersions: reactVersions.length > 0 ? reactVersions : null,
   };
 }
 
