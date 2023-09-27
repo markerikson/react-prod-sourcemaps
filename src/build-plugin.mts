@@ -43,7 +43,7 @@ function rewireSourceMapsFromGeneratedAssetList(
     if (!rewriteResult.rewroteSourcemap) {
       stats.skippedSourceMaps++;
       if (options.debug) {
-        log("ReactSourceMaps: ❌ No React version found in sourcemap, skipping", file);
+        log("ReactSourceMaps: ❓ No React version found in sourcemap, skipping", file);
       }
       continue;
     }

@@ -10,6 +10,11 @@ import resolveUri from "@jridgewell/resolve-uri";
 import * as BuildPlugins from "./build-plugin.mjs";
 import { ReactVersion, hashesToSourcemapDescriptors } from "./reactVersions.mjs";
 
+export interface ReactProdSourcemapsOptions {
+  verbose?: boolean;
+  errorOnMissingVersions?: boolean;
+}
+
 function getDirname() {
   if (typeof __dirname !== "undefined") {
     return __dirname;
@@ -67,7 +72,7 @@ export function loadSourcemap(filePath: string): SourceMapV3 {
 
 function loadExistingSourcemap(
   versionEntry: ReactVersion,
-  options: { verbose?: boolean } = { verbose: false }
+  options: ReactProdSourcemapsOptions
 ): SourceMapV3 {
   const filename = versionEntry.filename + ".map";
   const filePath = path.join(
@@ -87,7 +92,8 @@ function loadExistingSourcemap(
 
 function findMatchingReactVersion(
   reactArtifactFilename: string,
-  inputSourcemap: SourceMapV3
+  inputSourcemap: SourceMapV3,
+  options: ReactProdSourcemapsOptions
 ): ReactVersion {
   let filenameIndex = inputSourcemap.sources.indexOf(reactArtifactFilename);
   if (filenameIndex === -1) {
@@ -107,14 +113,27 @@ function findMatchingReactVersion(
 
   const sourceContents = inputSourcemap.sourcesContent?.[filenameIndex];
   if (!sourceContents) {
-    throw new Error(`Cannot find source contents for '${reactArtifactFilename}'`);
+    const message = `Cannot find source contents for '${reactArtifactFilename}'`;
+    if (options.verbose) {
+      log(message);
+    }
+    throw new Error(message);
   }
 
   const contentHash = hashSHA256(sourceContents);
   const versionEntry = hashesToSourcemapDescriptors[contentHash];
 
   if (!versionEntry) {
-    throw new Error(`Cannot find version for '${reactArtifactFilename}'`);
+    const reactInternalVersionRegex = /version:\"\d+\.\d+\.\d+.*?"/;
+    const reactInternalVersionMatch = reactInternalVersionRegex.exec(sourceContents);
+    const reactVersion = reactInternalVersionMatch?.groups?.version ?? "unknown";
+    const message = `Cannot find version for '${reactArtifactFilename}' (found: ${reactVersion})`;
+    if (options.verbose) {
+      log(message);
+    }
+    if (options.errorOnMissingVersions) {
+      throw new Error(message);
+    }
   }
 
   return versionEntry;
@@ -136,7 +155,7 @@ const SUPPORTED_PACKAGES =
 
 export function maybeRewriteSourcemapWithReactProd(
   inputSourcemap: SourceMapV3,
-  options: { verbose?: boolean } = { verbose: false }
+  options: ReactProdSourcemapsOptions = { verbose: false, errorOnMissingVersions: false }
 ): RewriteSourcemapResult {
   const isValidSourcemap = isSourceMapV3(inputSourcemap);
   if (!isValidSourcemap) {
@@ -156,7 +175,11 @@ export function maybeRewriteSourcemapWithReactProd(
 
     if (options.verbose) log(`Found ${matchedPackage} in file:`, ctx);
 
-    const versionEntry: ReactVersion | null = findMatchingReactVersion(file, inputSourcemap);
+    const versionEntry: ReactVersion | null = findMatchingReactVersion(
+      file,
+      inputSourcemap,
+      options
+    );
     if (!versionEntry) {
       if (options.verbose) {
         log(
@@ -168,9 +191,9 @@ export function maybeRewriteSourcemapWithReactProd(
 
     reactVersions.push(versionEntry);
     if (options.verbose)
-      log(`Found matching version for ${matchedPackage[0]}:`, versionEntry.version);
+      log(`✅ Found matching version for ${matchedPackage[0]}:`, versionEntry.version);
 
-    const sourcemap = loadExistingSourcemap(versionEntry);
+    const sourcemap = loadExistingSourcemap(versionEntry, options);
 
     if (!sourcemap || !isSourceMapV3(sourcemap)) {
       throw new Error(
