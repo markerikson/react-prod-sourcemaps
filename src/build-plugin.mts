@@ -75,10 +75,15 @@ function rewireSourceMapsFromGeneratedAssetList(
       " sourcemaps."
     );
   }
-
   if (options.mode === "strict" && stats.generatedSourceMaps === 0) {
     throw new Error(
       "ReactSourceMaps: ❌ No sourcemaps found in bundle. This is either a bug with react-sourcemaps plugin or an issue with your build tool. Please verify that your build system is generating sourcemaps before filing an issue with react-prod-sourcemaps."
+    );
+  }
+
+  if (options.mode === "strict" && stats.generatedSourceMaps - stats.skippedSourceMaps === 0) {
+    throw new Error(
+      "ReactSourceMaps: ❌ No react sourcemaps found in bundle, nothing was updated! This is either a bug with react-sourcemaps plugin or an issue with your build tool. Please verify that your build system is generating sourcemaps before filing an issue with react-prod-sourcemaps."
     );
   }
 }
