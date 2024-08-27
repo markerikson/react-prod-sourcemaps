@@ -60,6 +60,12 @@ export const availableSourcemapDescriptors: ReactVersion[] = [
   },
   {
     version: "18.2.0",
+    package: "react",
+    filename: "react-jsx-runtime.production.min.js",
+    contentHash: "76e3364c46895ed2c4a8d5cc332e5e4ef31d6f732d35b1e56826dc5895245452",
+  },
+  {
+    version: "18.2.0",
     package: "react-dom",
     filename: "react-dom.production.min.js",
     contentHash: "1404cd9fd1e2ee3ce79fba01957b01c83f88ccd86a3e55e6a51a871d9fe05552",

@@ -146,12 +146,12 @@ interface RewriteSourcemapResult {
 }
 
 // Rougly, the operation performed here is:
-// - Find the react-dom.production.min.js file in our sourcemap
+// - Find an appropriate minified file listed in our sourcemap's contents
 // - Find the version of React that matches the contents of that file
 // - Load the original sourcemap for that version of React
 // - Swap them out by rewriting the sourcemap
 const SUPPORTED_PACKAGES =
-  /(react-dom\.profiling\.min\.js|react-dom\.production\.min\.js|react\.production\.min\.js)/;
+  /(react-dom\.profiling\.min\.js|react-dom\.production\.min\.js|react(-jsx-runtime)*\.production\.min\.js)/;
 
 export function maybeRewriteSourcemapWithReactProd(
   inputSourcemap: SourceMapV3,
