@@ -76,6 +76,31 @@ export const availableSourcemapDescriptors: ReactVersion[] = [
     filename: "react-dom.profiling.min.js",
     contentHash: "81f4765156d0468929630c316276e0d7e5ec7940fde7d10380dd2d9b889327b5",
   },
+  // 18.3.1
+  {
+    version: "18.3.1",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "4b35e378f469c4f492c7514bb106b5833746dbbae80496bd4aa9acc6e9ac4b42",
+  },
+  {
+    version: "18.3.1",
+    package: "react",
+    filename: "react-jsx-runtime.production.min.js",
+    contentHash: "76e3364c46895ed2c4a8d5cc332e5e4ef31d6f732d35b1e56826dc5895245452",
+  },
+  {
+    version: "18.3.1",
+    package: "react-dom",
+    filename: "react-dom.production.min.js",
+    contentHash: "cbf7fe6b9726ee65f8bcd5715289cc5161c8dacf74d0b8aaa0d29412516f5f47",
+  },
+  {
+    version: "18.3.1",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "962c027be962261c45af4751cf219743e0537344db987d9aa89cbe3c8be3d36d",
+  },
 ];
 
 export const hashesToSourcemapDescriptors: Record<string, ReactVersion> = {};
