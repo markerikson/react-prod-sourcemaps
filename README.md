@@ -6,7 +6,7 @@ A tool to update app sourcemaps with the original code of ReactDOM's production 
 
 React has never shipped sourcemaps for any of its production build artifacts. This makes it impossible to meaningfully debug errors inside of React in production. React's source code is already hard to understand in its original form - trying figure out what's happening when all you have is single-character variable names and no comments is _impossible_.
 
-I have a PR up at https://github.com/facebook/react/pull/26446 that updates React's build pipeline to generate sourcemaps for production artifacts. If and when that _eventually_ gets merged, future releases of React will include sourcemaps.
+In 2023 I filed a React PR at https://github.com/facebook/react/pull/26446 that updated React's build pipeline to generate sourcemaps for production artifacts. It was eventually merged, but then later reverted. Instead, React 19 will ship with optimized but unminified prod artifacts. That means that app build steps will minify React's prod artifacts themselves, and thus React's source will be debuggable.
 
 However, that doesn't help debug _current_ versions of React.
 
@@ -14,29 +14,25 @@ I've done the work to check out the tagged source code for earlier React version
 
 The actual build changes used can be seen here:
 
-- https://github.com/facebook/react/compare/v18.2.0...replayio:react:feature/react-sourcemaps-18.2.0?expand=1
+- https://github.com/facebook/react/compare/v18.2.0...replayio:react:feature/react-sourcemaps-18.2.0
 
 ## Contents
 
 This package includes:
 
 - the actual sourcemaps
-- logic to search an input sourcemap for specific ReactDOM prod artifacts by content hash and replace them with the "original" pre-minified bundle source via the sourcemaps
+- logic to search an input sourcemap for specific React and ReactDOM prod artifacts by content hash and replace them with the "original" pre-minified bundle source via the sourcemaps
 - a CLI tool that will load a given input sourcemap file and rewrite it
-- a build tool plugin that will automatically replace react-dom sourcemaps
-
-(This is my first attempt at writing a Node CLI tool. It seems to run, but there's a good chance I got something wrong - let me know!)
+- a build tool plugin that will automatically replace React package sourcemaps found in the app bundle
 
 ### React Versions
 
-This package currently includes sourcemaps for:
+This package currently includes sourcemaps for React and ReactDOM for these versions:
 
-- ReactDOM
-  - 18.2.0
-  - 18.1.0
-  - 17.0.2
-
-I plan to also include ReactDOM 16.14.0 and 16.13.1, which will cover the majority of current React version downloads per NPM stats.
+- 18.3.1
+- 18.2.0
+- 18.1.0
+- 17.0.2
 
 ## CLI Usage
 
