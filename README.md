@@ -30,9 +30,13 @@ This package includes:
 This package currently includes sourcemaps for React and ReactDOM for these versions:
 
 - 18.3.1
+- 18.3.0
 - 18.2.0
 - 18.1.0
+- 18.0.0
 - 17.0.2
+- 17.0.1
+- 17.0.0
 
 ## CLI Usage
 

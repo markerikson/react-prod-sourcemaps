@@ -13,6 +13,44 @@ export const availableSourcemapDescriptors: ReactVersion[] = [
     filename: "react-dom.production.min.js",
     contentHash: "4cd441458e2535562a74651cbcd02d7c2e1f163e364aca608d3c5b00448e1442",
   },
+  // 17.0.0
+  {
+    version: "17.0.0",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "96d95494720616e71108253d355a160500d1ffff4871b53f3623e4942f86eb3d",
+  },
+  {
+    version: "17.0.0",
+    package: "react-dom",
+    filename: "react-dom.production.min.js",
+    contentHash: "1fd501f945dd93bae16b943400d32e31c0db752caaaa37dc82c08aeb83bc1832",
+  },
+  {
+    version: "17.0.0",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "5df7055a1996996b78b47273933ce4a140ed3aeaf63055d4f5e4473377947285",
+  },
+  // 17.0.1
+  {
+    version: "17.0.1",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "68e3f5cbfb193966233a692b5b92283a41ba502a536d478bb12c785790abf66e",
+  },
+  {
+    version: "17.0.1",
+    package: "react-dom",
+    filename: "react-dom.production.min.js",
+    contentHash: "29d183a4ece2ac1004e6e91d279e1f8f1440f6a7eb9e9d512964c9c7d4032b54",
+  },
+  {
+    version: "17.0.1",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "6242326d8e76e2a9fc21e8a7eca8048715b23e7e11c79ceac84182f3a4c3dfc8",
+  },
   // 17.0.2
   {
     version: "17.0.2",
@@ -31,6 +69,31 @@ export const availableSourcemapDescriptors: ReactVersion[] = [
     package: "react-dom",
     filename: "react-dom.profiling.min.js",
     contentHash: "c6d18f6f0b8479f2552da042d37e3b70bb4859251bc05e7bd3e9b100d68f2a30",
+  },
+  // 18.0.0
+  {
+    version: "18.0.0",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "035993c466d67e84ec18c7c7a4e5a6757ccfc5ee246d147fb46d4d8ff9ca10f1",
+  },
+  {
+    version: "18.0.0",
+    package: "react",
+    filename: "react-jsx-runtime.production.min.js",
+    contentHash: "76e3364c46895ed2c4a8d5cc332e5e4ef31d6f732d35b1e56826dc5895245452",
+  },
+  {
+    version: "18.0.0",
+    package: "react-dom",
+    filename: "react-dom.production.min.js",
+    contentHash: "fc0cbf5ce0b10d591a7d5ba2b859502274d0f9036b9ad692140b7f2b47fce5b2",
+  },
+  {
+    version: "18.0.0",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "20e7343163eb8404b8aac6be96523c7df8e989160bee592abbb23d6a2d43cd31",
   },
   // 18.1.0
   {
@@ -75,6 +138,31 @@ export const availableSourcemapDescriptors: ReactVersion[] = [
     package: "react-dom",
     filename: "react-dom.profiling.min.js",
     contentHash: "81f4765156d0468929630c316276e0d7e5ec7940fde7d10380dd2d9b889327b5",
+  },
+  // 18.3.0
+  {
+    version: "18.3.0",
+    package: "react",
+    filename: "react.production.min.js",
+    contentHash: "14b36e9b2b4bd8fec57550909502d12cf88e1b624741ab555f60b34c303594fa",
+  },
+  {
+    version: "18.3.0",
+    package: "react",
+    filename: "react-jsx-runtime.production.min.js",
+    contentHash: "76e3364c46895ed2c4a8d5cc332e5e4ef31d6f732d35b1e56826dc5895245452",
+  },
+  {
+    version: "18.3.0",
+    package: "react-dom",
+    filename: "react-dom.production.min.js",
+    contentHash: "7647763dd2028dfe40319d5c35ab97ebd74905a0b85c8207d3943d3726823ee4",
+  },
+  {
+    version: "18.3.0",
+    package: "react-dom",
+    filename: "react-dom.profiling.min.js",
+    contentHash: "c30ce5d7066fd12d6a6e285ae7fff0ccdac857c26bf6fac4f49b965e2d87a306",
   },
   // 18.3.1
   {
