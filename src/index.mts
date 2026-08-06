@@ -167,8 +167,8 @@ export function maybeRewriteSourcemapWithReactProd(
   const remapped = remapping(inputSourcemap as SourceMapInput, (file, ctx) => {
     const matchedPackage = SUPPORTED_PACKAGES.exec(ctx.source);
     if (matchedPackage === null) {
-      if (options.verbose) {
-        log(`Skipping sourcemap ${file} because it does not contain a sourcemap for remapping`);
+      if (options.verbose && ctx.source.endsWith(".js.map")) {
+        log(`Skipping sourcemap ${file} because it does not contain a source for remapping`);
       }
       return null;
     }
